@@ -134,12 +134,6 @@ const ProcessorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 w-full">
-      {user && (
-        <div className="bg-green-50 border-b border-green-200 p-4 mb-4 rounded flex items-center space-x-4">
-          <div className="font-bold text-green-700 text-lg">Welcome, {user.firstName} {user.lastName}</div>
-          <div className="text-gray-600 text-sm">({user.email}, <span className="capitalize">{user.role}</span>)</div>
-        </div>
-      )}
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
