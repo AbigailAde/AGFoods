@@ -5,6 +5,8 @@ import tokenCreateFcn from "./hedera/tokenCreate.js";
 import tokenMintFcn from "./hedera/tokenMint";
 import contractDeployFcn from "./hedera/contractDeploy.js";
 import contractExecuteFcn from "./hedera/contractExecute.js";
+import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function Wallet() {
     const [walletData, setWalletData] = useState();
@@ -24,6 +26,14 @@ function Wallet() {
     const [mintLinkSt, setMintLinkSt] = useState("");
     const [contractLinkSt, setContractLinkSt] = useState();
     const [trasnferLinkSt, setTransferLinkSt] = useState();
+
+    const { logout, user } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     async function connectWallet() {
         if (accountId !== undefined) {
@@ -143,6 +153,7 @@ function Wallet() {
                 text={trasnferTextSt}
                 link={trasnferLinkSt}
             />
+            <button onClick={handleLogout} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">Logout</button>
             <div className="logo">
                 <div className="symbol">
                     <svg

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, MapPin, Calendar, Shield, Star, Truck, Factory, Leaf, Phone, Mail, Award, Filter, Search, Plus, Minus, CreditCard, User, Clock, Package } from 'lucide-react';
 import PaystackButton from './Paystack';
+import { useAuth } from './AuthContext';
 
 const CustomerOrderDashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('browse');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -318,6 +320,12 @@ const CustomerOrderDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 w-full">
+      {user && (
+        <div className="bg-green-50 border-b border-green-200 p-4 mb-4 rounded flex items-center space-x-4">
+          <div className="font-bold text-green-700 text-lg">Welcome, {user.firstName} {user.lastName}</div>
+          <div className="text-gray-600 text-sm">({user.email}, <span className="capitalize">{user.role}</span>)</div>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-4">

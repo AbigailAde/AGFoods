@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ChevronRight, Leaf, Factory, Truck, QrCode, Shield, Users, TrendingUp, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAuth } from '../AuthContext';
 
 function OnboardFarmer() {
-  // Simulating a database with React state (localStorage not available in artifacts)
-  const [userDatabase, setUserDatabase] = useState([]);
+  const { signUp } = useAuth();
   const [currentStep, setCurrentStep] = useState('userType'); // 'userType', 'form', 'success'
   const [selectedUserType, setSelectedUserType] = useState(null);
   const [formData, setFormData] = useState({
@@ -30,39 +30,6 @@ function OnboardFarmer() {
       fields: ['firstName', 'lastName', 'email', 'phone', 'password', 'confirmPassword', 'companyName', 'location', 'certifications']
     }
   ];
-
-  // Mock API functions
-  const mockAPI = {
-    // Simulate checking if email exists
-    checkEmailExists: (email) => {
-      return userDatabase.some(user => user.email.toLowerCase() === email.toLowerCase());
-    },
-
-    // Simulate user registration
-    registerUser: (userData) => {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (mockAPI.checkEmailExists(userData.email)) {
-            reject(new Error('Email already exists'));
-            return;
-          }
-
-          const newUser = {
-            id: Date.now().toString(),
-            ...userData,
-            createdAt: new Date().toISOString(),
-            isVerified: false
-          };
-
-          setUserDatabase(prev => [...prev, newUser]);
-          resolve(newUser);
-        }, 1500); // Simulate network delay
-      });
-    },
-
-    // Get all users (for debugging)
-    getAllUsers: () => userDatabase
-  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -119,17 +86,13 @@ function OnboardFarmer() {
     if (!validateForm()) {
       return;
     }
-
     setIsLoading(true);
-
     try {
       const userData = {
         ...formData,
-        userType: selectedUserType
+        role: selectedUserType
       };
-      
-      const newUser = await mockAPI.registerUser(userData);
-      console.log('User registered successfully:', newUser);
+      await signUp(userData);
       setCurrentStep('success');
     } catch (error) {
       setErrors({ general: error.message });
@@ -411,13 +374,10 @@ function OnboardFarmer() {
             
             {/* Debug Info */}
             <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left">
-              <h3 className="font-semibold text-gray-800 mb-2">Debug: Registered Users ({userDatabase.length})</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">Debug: Registered Users</h3>
               <div className="text-sm text-gray-600 space-y-1">
-                {userDatabase.map(user => (
-                  <div key={user.id}>
-                    {user.firstName} {user.lastName} ({user.userType}) - {user.email}
-                  </div>
-                ))}
+                {/* The userDatabase state was removed, so this section is no longer relevant */}
+                <p>No registered users are currently stored in localStorage.</p>
               </div>
             </div>
           </div>

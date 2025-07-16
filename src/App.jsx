@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ChevronRight, Leaf, Factory, Truck, ShoppingCart, QrCode, Shield, Users, TrendingUp } from 'lucide-react';
 import Home from './components/Home';
 import Wallet from './components/Wallet';
@@ -11,6 +11,14 @@ import OnboardFarmer from "./components/SignUp/Farmer";
 import OnboardDistributor from "./components/SignUp/Distributor";
 import OnboardConsumer from "./components/SignUp/Consumer";
 import OnboardProcessor from "./components/SignUp/Processor";
+import Login from './components/Login';
+import { useAuth } from './components/AuthContext';
+import NavBar from './components/NavBar';
+
+function PrivateRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" />;
+}
 
 function App() {
     const [selectedUserType, setSelectedUserType] = useState(null);
@@ -97,19 +105,20 @@ function App() {
 
 	return (
     <BrowserRouter>
+      <NavBar />
       <Routes>
-        <Route root element={<Layout />} />
         <Route path="/" element={<Home />} />
-        <Route path="/processor/dashboard" element={<ProcessorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} />} />
-        <Route path="/wallet" element={<Wallet />} />
-        <Route path="/distributor/dashboard" element={<DistributorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} />} />
-        <Route path="/farmer/dashboard" element={<FarmerDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} />} />
-        <Route path="/consumer/dashboard" element={<CustomerOrderDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} />} />
-        <Route path="/products/:id" element={<FarmerDashboard userType="farmer" />} />
+        <Route path="/processor/dashboard" element={<PrivateRoute><ProcessorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+        <Route path="/wallet" element={<PrivateRoute><Wallet /></PrivateRoute>} />
+        <Route path="/distributor/dashboard" element={<PrivateRoute><DistributorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+        <Route path="/farmer/dashboard" element={<PrivateRoute><FarmerDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+        <Route path="/consumer/dashboard" element={<PrivateRoute><CustomerOrderDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+        <Route path="/products/:id" element={<PrivateRoute><FarmerDashboard userType="farmer" /></PrivateRoute>} />
         <Route path="/signup/farmer" element={<OnboardFarmer />} />
         <Route path="/signup/processor" element={<OnboardProcessor />} />
         <Route path="/signup/distributor" element={<OnboardDistributor />} />
         <Route path="/signup/consumer" element={<OnboardConsumer />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<div className="text-center mt-10 text-red-500">404 - Page Not Found</div>} />
       </Routes>
     </BrowserRouter>

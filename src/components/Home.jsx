@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { ChevronRight, Leaf, Factory, Truck, ShoppingCart, QrCode, Shield, Users, TrendingUp } from 'lucide-react';
+import { useAuth } from './AuthContext';
 
 function Home() {
     const [selectedUserType, setSelectedUserType] = useState(null);
-    const isAuth = false; // Simulating authentication state, replace with actual auth logic
+    const { isAuthenticated, user } = useAuth();
 
   const userTypes = [
     {
@@ -87,7 +88,7 @@ function Home() {
               {userTypes.map((type) => (
                 <a
                   key={type.id}
-                  href={`${isAuth === true ? `/${type.id}/dashboard` : `/signup/${type.id}`}`}
+                  href={isAuthenticated ? `/${user.role}/dashboard` : `/signup/${type.id}`}
                   className="group block bg-white rounded-xl p-6 text-center border border-gray-200 hover:border-green-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <div className="mb-3 flex items-center justify-center w-16 h-16 rounded-full mx-auto">
