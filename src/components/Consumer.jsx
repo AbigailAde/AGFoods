@@ -327,34 +327,6 @@ const CustomerOrderDashboard = () => {
         </div>
       )}
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AGFoods</h1>
-                <p className="text-sm text-gray-600">Customer Portal</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">Welcome Back!</p>
-                <p className="text-xs text-gray-500">Fresh • Verified • Delivered</p>
-              </div>
-              <div className="relative">
-                <button className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                  <ShoppingCart className="w-4 h-4" />
-                  <span>{cart.length}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Navigation Tabs */}
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4">

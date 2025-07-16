@@ -14,15 +14,7 @@ const ProcessorDashboard = () => {
   });
 
   // Sample data - in real app, this would come from blockchain/API
-  const processorData = {
-    name: "Mrs. Adaeze Nwankwo",
-    companyName: "Golden Flour Mills Ltd",
-    location: "Industrial Layout, Nnewi, Anambra State",
-    processorId: "PRC-002-567",
-    totalBatches: 156,
-    activeBatches: 12,
-    monthlyRevenue: "₦2,850,000"
-  };
+  // Remove processorData and all references to it, including the welcome message and company info that uses 'Mrs. Adaeze Nwankwo', 'Golden Flour Mills Ltd', etc. Only use the user info from useAuth and keep the rest of the dashboard functional.
 
   // Processing type information
   const processTypeInfo = {
@@ -162,7 +154,7 @@ const ProcessorDashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-600">Welcome back, {processorData.name}</span>
+              <span className="text-sm text-gray-600">Welcome back, {user?.firstName} {user?.lastName}</span>
               <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-semibold">A</span>
               </div>
@@ -176,19 +168,19 @@ const ProcessorDashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{processorData.companyName}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Company Name</h2>
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
-                <span>{processorData.location}</span>
+                <span>Your Location</span>
               </div>
               <div className="flex items-center space-x-6">
                 <div>
                   <p className="text-sm text-gray-500">Processor ID</p>
-                  <p className="font-semibold text-gray-900">{processorData.processorId}</p>
+                  <p className="font-semibold text-gray-900">Your Processor ID</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Monthly Revenue</p>
-                  <p className="font-semibold text-purple-600">{processorData.monthlyRevenue}</p>
+                  <p className="font-semibold text-purple-600">₦0</p>
                 </div>
               </div>
             </div>
@@ -208,7 +200,7 @@ const ProcessorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Processed</p>
-                <p className="text-2xl font-bold text-gray-900">{processorData.totalBatches}</p>
+                <p className="text-2xl font-bold text-gray-900">0</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Factory className="w-6 h-6 text-purple-600" />
@@ -220,7 +212,7 @@ const ProcessorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Active Batches</p>
-                <p className="text-2xl font-bold text-gray-900">{processorData.activeBatches}</p>
+                <p className="text-2xl font-bold text-gray-900">0</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6 text-blue-600" />
@@ -232,7 +224,7 @@ const ProcessorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Quality Score</p>
-                <p className="text-2xl font-bold text-gray-900">A+</p>
+                <p className="text-2xl font-bold text-gray-900">N/A</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-green-600" />
@@ -244,7 +236,7 @@ const ProcessorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">This Month</p>
-                <p className="text-2xl font-bold text-gray-900">28</p>
+                <p className="text-2xl font-bold text-gray-900">0</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-yellow-600" />

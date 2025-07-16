@@ -13,16 +13,6 @@ const FarmerDashboard = () => {
   });
 
   // Sample data - in real app, this would come from blockchain/API
-  const farmerData = {
-    name: "Samuel Okafor",
-    farmName: "Green Valley Plantain Farm",
-    location: "Onitsha, Anambra State",
-    farmId: "AGF-001-234",
-    totalBatches: 24,
-    activeBatches: 6,
-    revenue: "₦450,000"
-  };
-
   const recentBatches = [
     {
       id: "BTH-001",
@@ -105,7 +95,7 @@ const FarmerDashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-600">Welcome back, {farmerData.name}</span>
+              <span className="text-sm text-gray-600">Welcome back, {user?.firstName} {user?.lastName}</span>
               <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-semibold">S</span>
               </div>
@@ -119,19 +109,19 @@ const FarmerDashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{farmerData.farmName}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Farm</h2>
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
-                <span>{farmerData.location}</span>
+                <span>{user?.location}</span>
               </div>
               <div className="flex items-center space-x-6">
                 <div>
                   <p className="text-sm text-gray-500">Farm ID</p>
-                  <p className="font-semibold text-gray-900">{farmerData.farmId}</p>
+                  <p className="font-semibold text-gray-900">{user?.farmId}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total Revenue</p>
-                  <p className="font-semibold text-green-600">{farmerData.revenue}</p>
+                  <p className="font-semibold text-green-600">₦{user?.totalRevenue}</p>
                 </div>
               </div>
             </div>
@@ -151,7 +141,7 @@ const FarmerDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Batches</p>
-                <p className="text-2xl font-bold text-gray-900">{farmerData.totalBatches}</p>
+                <p className="text-2xl font-bold text-gray-900">{user?.totalBatches}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Package className="w-6 h-6 text-blue-600" />
@@ -163,7 +153,7 @@ const FarmerDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Active Batches</p>
-                <p className="text-2xl font-bold text-gray-900">{farmerData.activeBatches}</p>
+                <p className="text-2xl font-bold text-gray-900">{user?.activeBatches}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6 text-green-600" />

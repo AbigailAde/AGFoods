@@ -15,32 +15,6 @@ const DistributorDashboard = () => {
     specialInstructions: ''
   });
 
-  // Sample data - in real app, this would come from blockchain/API
-  const distributorData = {
-    wholesaler: {
-      name: "Mr. Chukwuma Ogbonna",
-      companyName: "West African Food Distributors Ltd",
-      location: "Trade Fair Complex, Lagos State",
-      distributorId: "WSL-003-891",
-      totalOrders: 342,
-      activeOrders: 18,
-      monthlyRevenue: "₦12,500,000",
-      clientsServed: 45
-    },
-    retailer: {
-      name: "Mrs. Fatima Abdullahi",
-      companyName: "Golden Gate Supermarket",
-      location: "Victoria Island, Lagos State",
-      distributorId: "RTL-005-234",
-      totalOrders: 89,
-      activeOrders: 7,
-      monthlyRevenue: "₦3,200,000",
-      clientsServed: 850
-    }
-  };
-
-  const currentData = distributorData[distributorType];
-
   // Order type information for wholesalers vs retailers
   const orderTypeInfo = {
     wholesaler: {
@@ -201,7 +175,7 @@ const DistributorDashboard = () => {
                 </button>
               </div>
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-600">Welcome back, {currentData.name}</span>
+                <span className="text-sm text-gray-600">Welcome back, {user?.firstName} {user?.lastName}</span>
                 <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-semibold">
                     {distributorType === 'wholesaler' ? 'C' : 'F'}
@@ -218,25 +192,33 @@ const DistributorDashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentData.companyName}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {user?.companyName || 'Your Company Name'}
+              </h2>
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
-                <span>{currentData.location}</span>
+                <span>{user?.location || 'Your Location'}</span>
               </div>
               <div className="flex items-center space-x-6">
                 <div>
                   <p className="text-sm text-gray-500">Distributor ID</p>
-                  <p className="font-semibold text-gray-900">{currentData.distributorId}</p>
+                  <p className="font-semibold text-gray-900">
+                    {user?.distributorId || 'N/A'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Monthly Revenue</p>
-                  <p className="font-semibold text-orange-600">{currentData.monthlyRevenue}</p>
+                  <p className="font-semibold text-orange-600">
+                    {user?.monthlyRevenue || '₦0'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">
                     {distributorType === 'wholesaler' ? 'Clients Served' : 'Customers Served'}
                   </p>
-                  <p className="font-semibold text-gray-900">{currentData.clientsServed}</p>
+                  <p className="font-semibold text-gray-900">
+                    {user?.clientsServed || 0}
+                  </p>
                 </div>
               </div>
             </div>
@@ -256,7 +238,9 @@ const DistributorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{currentData.totalOrders}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {user?.totalOrders || 0}
+                </p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                 <ShoppingCart className="w-6 h-6 text-orange-600" />
@@ -268,7 +252,9 @@ const DistributorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Active Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{currentData.activeOrders}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {user?.activeOrders || 0}
+                </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6 text-blue-600" />
