@@ -83,24 +83,24 @@ function App() {
   ];
 
   const Layout = () => (
-    <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AGFoods</h1>
-                <p className="text-sm text-gray-600">Farm to Table Verification</p>
-              </div>
+    <header className="bg-white shadow-sm border-b w-full">
+      <div className="mzx-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
+              <Leaf className="w-6 h-6 text-white" />
             </div>
-            <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-              About
-            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">AGFoods</h1>
+              <p className="text-sm text-gray-600">Farm to Table Verification</p>
+            </div>
           </div>
+          <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+            About
+          </button>
         </div>
-      </header>
+      </div>
+    </header>
   );
 
 	return (
@@ -121,6 +121,19 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<div className="text-center mt-10 text-red-500">404 - Page Not Found</div>} />
       </Routes>
+      <footer className="bg-gray-900 text-white py-12 w-full">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                <Leaf className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-lg font-semibold">AGFoods</span>
+            </div>
+            <p className="text-gray-400 text-sm">© 2025 AGFoods. Powered by blockchain technology.</p>
+          </div>
+        </div>
+      </footer>
     </BrowserRouter>
 	);
 }

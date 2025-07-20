@@ -42,6 +42,17 @@ async function hashPassword(password) {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Helper: generate userId in the format AGF-<random 4-6 chars>-<role initial>
+function generateUserId(role) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let rand = '';
+  for (let i = 0; i < 4 + Math.floor(Math.random() * 3); i++) {
+    rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  const roleInitial = role ? role[0].toUpperCase() : 'U';
+  return `AGF-${rand}-${roleInitial}`;
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(getStoredCurrentUser());
 
@@ -57,12 +68,16 @@ export const AuthProvider = ({ children }) => {
       throw new Error('User with this email and role already exists');
     }
     const hashedPassword = await hashPassword(userData.password);
+    const userId = generateUserId(userData.role);
     const newUser = {
       ...userData,
+      id: userId,
       password: hashedPassword,
-      id: Date.now().toString(),
       createdAt: new Date().toISOString(),
     };
+    if (userData.role === 'farmer') {
+      newUser.farmId = userId;
+    }
     users.push(newUser);
     setStoredUsers(users);
     setUser(newUser); // auto-login after sign up

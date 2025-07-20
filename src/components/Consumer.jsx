@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, MapPin, Calendar, Shield, Star, Truck, Factory, Leaf, Phone, Mail, Award, Filter, Search, Plus, Minus, CreditCard, User, Clock, Package } from 'lucide-react';
 import PaystackButton from './Paystack';
 import { useAuth } from './AuthContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+autoTable(jsPDF);
+
+const BATCHES_KEY = 'batches';
+const ORDERS_KEY = 'orders';
 
 const CustomerOrderDashboard = () => {
   const { user } = useAuth();
@@ -22,6 +28,8 @@ const CustomerOrderDashboard = () => {
     paymentMethod: 'card',
     specialInstructions: ''
   });
+  const [products, setProducts] = useState([]);
+  const [orderHistory, setOrderHistory] = useState([]);
 
   // Mock product categories
   const categories = [
@@ -211,24 +219,30 @@ const CustomerOrderDashboard = () => {
     }, 0);
   };
 
-  const handleOrderSubmit = (e) => {
-    e.preventDefault();
-    // Here you would typically send the order to your backend
-    alert('Order placed successfully! You will receive a confirmation email shortly.');
-    setCart([]);
-    setShowOrderForm(false);
-    setOrderForm({
-      customerName: '',
-      email: '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      deliveryDate: '',
-      paymentMethod: 'card',
-      specialInstructions: ''
-    });
+  // Load products and orders from localStorage for this consumer
+  useEffect(() => {
+    const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
+    setProducts(allBatches.filter(b => b.status === 'Ready' || b.status === 'Delivered'));
+    const allOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
+    setOrderHistory(allOrders.filter(o => o.consumerId === user?.id));
+  }, [user]);
+
+  // When placing an order, save to localStorage
+  const handleOrderSubmit = (orderData) => {
+    const order = {
+      ...orderData,
+      id: 'ORD-' + Date.now(),
+      consumerId: user.id,
+      createdAt: new Date().toISOString(),
+      status: 'Placed'
+    };
+    const allOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
+    const updated = [order, ...allOrders];
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(updated));
+    setOrderHistory([order, ...orderHistory]);
   };
+
+
 
   const ProductCard = ({ product }) => (
     <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
@@ -318,10 +332,35 @@ const CustomerOrderDashboard = () => {
     </div>
   );
 
+  // CSV export utility
+  function exportToCSV(data, filename) {
+    if (!data.length) return;
+    const headers = Object.keys(data[0]);
+    const csvRows = [headers.join(',')];
+    for (const row of data) {
+      csvRows.push(headers.map(h => '"' + (row[h] ?? '') + '"').join(','));
+    }
+    const csv = csvRows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+  // PDF export utility
+  function exportToPDF(data, filename) {
+    if (!data.length) return;
+    const doc = new jsPDF();
+    const headers = Object.keys(data[0]);
+    const rows = data.map(row => headers.map(h => row[h] ?? ''));
+    autoTable({ head: [headers], body: rows });
+    doc.save(filename);
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 w-full">
-      {/* Header */}
-      {/* Navigation Tabs */}
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4">
           <nav className="flex space-x-8">

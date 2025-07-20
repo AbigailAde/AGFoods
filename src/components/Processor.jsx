@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Thermometer, Scale } from 'lucide-react';
 import { useAuth } from './AuthContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+const BATCHES_KEY = 'batches';
+const PROCESSING_KEY = 'processing';
 
 const ProcessorDashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [showProcessBatch, setShowProcessBatch] = useState(false);
   const [newProcessing, setNewProcessing] = useState({
@@ -12,11 +18,10 @@ const ProcessorDashboard = () => {
     qualityGrade: '',
     processingNotes: ''
   });
+  const [incomingBatches, setIncomingBatches] = useState([]);
+  const [processingJobs, setProcessingJobs] = useState([]);
 
-  // Sample data - in real app, this would come from blockchain/API
-  // Remove processorData and all references to it, including the welcome message and company info that uses 'Mrs. Adaeze Nwankwo', 'Golden Flour Mills Ltd', etc. Only use the user info from useAuth and keep the rest of the dashboard functional.
-
-  // Processing type information
+  // Add processTypeInfo definition
   const processTypeInfo = {
     'Plantain Flour': 'High-quality flour for baking and food production. Gluten-free alternative with 85-90% yield rate.',
     'Plantain Chips': 'Crispy snack chips with extended shelf life. Popular retail product with 70-75% yield rate.',
@@ -24,70 +29,84 @@ const ProcessorDashboard = () => {
     'Plantain Puree': 'Smooth paste for baby food and industrial use. High-value processing with 60-65% yield rate.'
   };
 
-  const incomingBatches = [
-    {
-      id: "BTH-001",
-      farmerId: "AGF-001-234",
-      farmerName: "Samuel Okafor",
-      variety: "French Horn",
-      quantity: "500kg",
-      harvestDate: "2025-06-10",
-      status: "Incoming",
-      qrCode: "QR-001-456",
-      estimatedArrival: "2025-06-14",
-      qualityScore: "A+"
-    },
-    {
-      id: "BTH-004",
-      farmerId: "AGF-003-789",
-      farmerName: "Grace Okoro",
-      variety: "Big Ebanga",
-      quantity: "850kg",
-      harvestDate: "2025-06-11",
-      status: "Quality Check",
-      qrCode: "QR-004-321",
-      estimatedArrival: "2025-06-13",
-      qualityScore: "A"
-    },
-    {
-      id: "BTH-005",
-      farmerId: "AGF-005-123",
-      farmerName: "John Emeka",
-      variety: "Agbagba",
-      quantity: "650kg",
-      harvestDate: "2025-06-09",
-      status: "Processing",
-      qrCode: "QR-005-654",
-      processType: "Plantain Flour",
-      qualityScore: "B+"
-    }
-  ];
+  // Load incoming batches and processing jobs from localStorage
+  useEffect(() => {
+    if (!user) return;
+    const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
+    setIncomingBatches(allBatches.filter(b => b.status === 'Ready' || b.status === 'Incoming'));
+    const allProcessing = JSON.parse(localStorage.getItem(PROCESSING_KEY) || '[]');
+    setProcessingJobs(allProcessing.filter(p => p.processorId === user.id));
+  }, [user]);
 
-  const activeProcessing = [
-    {
-      id: "PROC-001",
-      batchId: "BTH-005",
-      processType: "Plantain Flour",
-      startDate: "2025-06-13",
-      expectedCompletion: "2025-06-15",
-      currentStage: "Drying",
-      progress: 65,
-      expectedYield: "520kg",
-      currentYield: "338kg"
-    },
-    {
-      id: "PROC-002", 
-      batchId: "BTH-003",
-      processType: "Plantain Chips",
-      startDate: "2025-06-12",
-      expectedCompletion: "2025-06-14",
-      currentStage: "Packaging",
-      progress: 90,
-      expectedYield: "225kg",
-      currentYield: "203kg"
-    }
-  ];
+  // Save processing jobs to localStorage
+  const saveProcessingJobs = (updatedJobs) => {
+    const allProcessing = JSON.parse(localStorage.getItem(PROCESSING_KEY) || '[]');
+    // Remove this processor's jobs, add updated
+    const filtered = allProcessing.filter(p => p.processorId !== user.id);
+    const merged = [...filtered, ...updatedJobs];
+    localStorage.setItem(PROCESSING_KEY, JSON.stringify(merged));
+    setProcessingJobs(updatedJobs);
+  };
 
+  // Start a new processing job
+  const handleStartProcessing = () => {
+    const batch = incomingBatches.find(b => b.id === newProcessing.batchId);
+    const job = {
+      id: 'PROC-' + Date.now(),
+      processorId: user.id,
+      batchId: newProcessing.batchId,
+      processType: newProcessing.processType,
+      expectedYield: newProcessing.expectedYield,
+      qualityGrade: newProcessing.qualityGrade,
+      processingNotes: newProcessing.processingNotes,
+      status: 'Processing',
+      startDate: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    const updated = [job, ...processingJobs];
+    saveProcessingJobs(updated);
+    setShowProcessBatch(false);
+    setNewProcessing({ batchId: '', processType: '', expectedYield: '', qualityGrade: '', processingNotes: '' });
+  };
+
+  // Stats
+  const totalProcessed = processingJobs.length;
+  const activeProcessing = processingJobs.filter(j => j.status === 'Processing').length;
+  const completed = processingJobs.filter(j => j.status === 'Completed').length;
+  const thisMonth = processingJobs.filter(j => {
+    const d = new Date(j.startDate);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  // CSV export utility
+  function exportToCSV(data, filename) {
+    if (!data.length) return;
+    const headers = Object.keys(data[0]);
+    const csvRows = [headers.join(',')];
+    for (const row of data) {
+      csvRows.push(headers.map(h => '"' + (row[h] ?? '') + '"').join(','));
+    }
+    const csv = csvRows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+  // PDF export utility
+  function exportToPDF(data, filename) {
+    if (!data.length) return;
+    const doc = new jsPDF();
+    const headers = Object.keys(data[0]);
+    const rows = data.map(row => headers.map(h => row[h] ?? ''));
+    autoTable({ head: [headers], body: rows });
+    doc.save(filename);
+  }
+
+  // UI helpers (getStatusColor, getStatusIcon, getQualityColor) remain unchanged
   const getStatusColor = (status) => {
     switch(status) {
       case 'Incoming': return 'bg-blue-100 text-blue-800';
@@ -123,15 +142,7 @@ const ProcessorDashboard = () => {
     }
   };
 
-  const handleStartProcessing = () => {
-    // In real app, this would interact with smart contract
-    console.log('Starting processing:', newProcessing);
-    setShowProcessBatch(false);
-    setNewProcessing({ batchId: '', processType: '', expectedYield: '', qualityGrade: '', processingNotes: '' });
-  };
-
-  const { user } = useAuth();
-
+  // In the JSX, use processingJobs for the main table, and incomingBatches for selection
   return (
     <div className="min-h-screen bg-gray-50 w-full">
       {/* Header */}
@@ -194,7 +205,7 @@ const ProcessorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Processed</p>
-                <p className="text-2xl font-bold text-gray-900">0</p>
+                <p className="text-2xl font-bold text-gray-900">{totalProcessed}</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Factory className="w-6 h-6 text-purple-600" />
@@ -206,7 +217,7 @@ const ProcessorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Active Batches</p>
-                <p className="text-2xl font-bold text-gray-900">0</p>
+                <p className="text-2xl font-bold text-gray-900">{activeProcessing}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6 text-blue-600" />
@@ -230,7 +241,7 @@ const ProcessorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">This Month</p>
-                <p className="text-2xl font-bold text-gray-900">0</p>
+                <p className="text-2xl font-bold text-gray-900">{thisMonth}</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-yellow-600" />
@@ -245,8 +256,24 @@ const ProcessorDashboard = () => {
             <h3 className="text-lg font-semibold text-gray-900">Active Processing</h3>
           </div>
           <div className="p-6">
+            <div className="flex justify-end mb-2 space-x-2">
+              <button
+                className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
+                onClick={() => exportToCSV(processingJobs, 'processing.csv')}
+                disabled={processingJobs.length === 0}
+              >
+                Export CSV
+              </button>
+              <button
+                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                onClick={() => exportToPDF(processingJobs, 'processing.pdf')}
+                disabled={processingJobs.length === 0}
+              >
+                Export PDF
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {activeProcessing.map((process) => (
+              {processingJobs.map((process) => (
                 <div key={process.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
@@ -374,7 +401,7 @@ const ProcessorDashboard = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
                   <option value="">Select batch to process</option>
-                  {incomingBatches.filter(b => b.status === 'Quality Check').map(batch => (
+                  {incomingBatches.filter(b => b.status === 'Ready' || b.status === 'Incoming').map(batch => (
                     <option key={batch.id} value={batch.id}>
                       {batch.id} - {batch.variety} ({batch.quantity})
                     </option>

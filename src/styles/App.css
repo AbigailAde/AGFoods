@@ -195,12 +195,9 @@ code {
 
 #root {
 	position: relative;
-	padding: 0 20px;
 	margin: 0;
-	width: calc(100% - 40px);
 	height: auto;
 	min-height: 100%;
-	background-image: url(../assets/colors.png);
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;
@@ -210,12 +207,12 @@ code {
 	flex-direction: column;
 }
 
-.App {
+/* .App {
 	width: 100%;
 	min-height: 800px;
 	text-align: center;
     flex: 1 0 auto;
-}
+} */
 
 .container {
 	height: 100%;

@@ -1,48 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck } from 'lucide-react';
 import { useAuth } from './AuthContext';
+import { useDropzone } from 'react-dropzone';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+const BATCHES_KEY = 'batches';
 
 const FarmerDashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateBatch, setShowCreateBatch] = useState(false);
   const [newBatch, setNewBatch] = useState({
     variety: '',
     quantity: '',
     harvestDate: '',
-    qualityNotes: ''
+    qualityNotes: '',
+    image: '' // base64 string
   });
+  const [batches, setBatches] = useState([]);
 
-  // Sample data - in real app, this would come from blockchain/API
-  const recentBatches = [
-    {
-      id: "BTH-001",
-      variety: "French Horn",
-      quantity: "500kg",
-      harvestDate: "2025-06-10",
-      status: "Processing",
-      qrCode: "QR-001-456",
-      processor: "Golden Flour Mills"
-    },
-    {
-      id: "BTH-002", 
-      variety: "Big Ebanga",
-      quantity: "750kg",
-      harvestDate: "2025-06-08",
-      status: "Delivered",
-      qrCode: "QR-002-789",
-      processor: "Premium Foods Ltd"
-    },
-    {
-      id: "BTH-003",
-      variety: "French Horn",
-      quantity: "300kg", 
-      harvestDate: "2025-06-12",
-      status: "Ready",
-      qrCode: "QR-003-123",
-      processor: "Pending Collection"
-    }
-  ];
+  // Load batches from localStorage for this farmer
+  useEffect(() => {
+    if (!user) return;
+    const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
+    setBatches(allBatches.filter(b => b.farmerId === user.id));
+  }, [user]);
 
+  // Save batches to localStorage
+  const saveBatches = (updatedBatches) => {
+    const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
+    // Remove this farmer's batches, add updated
+    const filtered = allBatches.filter(b => b.farmerId !== user.id);
+    const merged = [...filtered, ...updatedBatches];
+    localStorage.setItem(BATCHES_KEY, JSON.stringify(merged));
+    setBatches(updatedBatches);
+  };
+
+  // Create a new batch
+  const handleCreateBatch = () => {
+    const batch = {
+      id: 'BTH-' + Date.now(),
+      farmerId: user.id,
+      variety: newBatch.variety,
+      quantity: newBatch.quantity,
+      harvestDate: newBatch.harvestDate,
+      qualityNotes: newBatch.qualityNotes,
+      image: newBatch.image,
+      status: 'Ready',
+      createdAt: new Date().toISOString()
+    };
+    const updated = [batch, ...batches];
+    saveBatches(updated);
+    setShowCreateBatch(false);
+    setNewBatch({ variety: '', quantity: '', harvestDate: '', qualityNotes: '', image: '' });
+  };
+
+  // Stats
+  const totalBatches = batches.length;
+  const activeBatches = batches.filter(b => b.status === 'Ready' || b.status === 'Processing').length;
+  const thisMonth = batches.filter(b => {
+    const d = new Date(b.harvestDate);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  // UI helpers
   const getStatusColor = (status) => {
     switch(status) {
       case 'Ready': return 'bg-green-100 text-green-800';
@@ -52,7 +75,6 @@ const FarmerDashboard = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getStatusIcon = (status) => {
     switch(status) {
       case 'Ready': return <Package className="w-4 h-4" />;
@@ -63,41 +85,47 @@ const FarmerDashboard = () => {
     }
   };
 
-  const handleCreateBatch = () => {
-    // In real app, this would interact with smart contract
-    console.log('Creating batch:', newBatch);
-    setShowCreateBatch(false);
-    setNewBatch({ variety: '', quantity: '', harvestDate: '', qualityNotes: '' });
-    // Would refresh batch list here
+  // Image upload handler
+  const onDrop = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewBatch(batch => ({ ...batch, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] } });
 
-  const { user } = useAuth();
+  // CSV export utility
+  function exportToCSV(data, filename) {
+    if (!data.length) return;
+    const headers = Object.keys(data[0]);
+    const csvRows = [headers.join(',')];
+    for (const row of data) {
+      csvRows.push(headers.map(h => '"' + (row[h] ?? '') + '"').join(','));
+    }
+    const csv = csvRows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+  // PDF export utility
+  function exportToPDF(data, filename) {
+    if (!data.length) return;
+    const doc = new jsPDF();
+    const headers = Object.keys(data[0]);
+    const rows = data.map(row => headers.map(h => row[h] ?? ''));
+    autoTable({ head: [headers], body: rows });
+    doc.save(filename);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 w-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                <Package className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AGFoods</h1>
-                <p className="text-sm text-gray-600">Farmer Dashboard</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-600">Welcome back, {user?.firstName} {user?.lastName}</span>
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">S</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Farm Info Card */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
@@ -106,16 +134,16 @@ const FarmerDashboard = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Farm</h2>
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
-                <span>{user?.location}</span>
+                <span>{user?.location || 'Your Location'}</span>
               </div>
               <div className="flex items-center space-x-6">
                 <div>
                   <p className="text-sm text-gray-500">Farm ID</p>
-                  <p className="font-semibold text-gray-900">{user?.farmId}</p>
+                  <p className="font-semibold text-gray-900">{user?.farmId || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total Revenue</p>
-                  <p className="font-semibold text-green-600">₦{user?.totalRevenue}</p>
+                  <p className="font-semibold text-green-600">₦{user?.totalRevenue || 0}</p>
                 </div>
               </div>
             </div>
@@ -135,7 +163,7 @@ const FarmerDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Batches</p>
-                <p className="text-2xl font-bold text-gray-900">{user?.totalBatches}</p>
+                <p className="text-2xl font-bold text-gray-900">{totalBatches}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Package className="w-6 h-6 text-blue-600" />
@@ -147,7 +175,7 @@ const FarmerDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Active Batches</p>
-                <p className="text-2xl font-bold text-gray-900">{user?.activeBatches}</p>
+                <p className="text-2xl font-bold text-gray-900">{activeBatches}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6 text-green-600" />
@@ -159,7 +187,7 @@ const FarmerDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">This Month</p>
-                <p className="text-2xl font-bold text-gray-900">8</p>
+                <p className="text-2xl font-bold text-gray-900">{thisMonth}</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-yellow-600" />
@@ -170,8 +198,25 @@ const FarmerDashboard = () => {
 
         {/* Recent Batches */}
         <div className="bg-white rounded-xl shadow-sm border">
-          <div className="px-6 py-4 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Batches</h3>
+          <div className="px-6 py-4 border-b flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Your Batches</h3>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
+                onClick={() => exportToCSV(batches, 'batches.csv')}
+                disabled={batches.length === 0}
+              >
+                Export CSV
+              </button>
+              <button
+                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                onClick={() => exportToPDF(batches, 'batches.pdf')}
+                disabled={batches.length === 0}
+              >
+                Export PDF
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -182,65 +227,48 @@ const FarmerDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harvest Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality Notes</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recentBatches.map((batch) => (
-                  <tr key={batch.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {batch.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {batch.variety}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {batch.quantity}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(batch.harvestDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(batch.status)}`}>
-                        {getStatusIcon(batch.status)}
-                        <span className="ml-1">{batch.status}</span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="flex items-center space-x-1 text-blue-600 hover:text-blue-800">
-                        <QrCode className="w-4 h-4" />
-                        <span>View QR</span>
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="text-blue-600 hover:text-blue-800 mr-3">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
+              <tbody>
+                {batches.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-400">No batches yet. Click "Create Batch" to add your first batch.</td>
                   </tr>
-                ))}
+                ) : (
+                  batches.map(batch => (
+                    <tr key={batch.id}>
+                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{batch.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{batch.variety}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{batch.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{batch.harvestDate}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getStatusColor(batch.status)}`}>
+                          {getStatusIcon(batch.status)}
+                          <span className="ml-1">{batch.status}</span>
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">{batch.qualityNotes}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
 
-      {/* Create Batch Modal */}
-      {showCreateBatch && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowCreateBatch(false)}>
-          <div className="bg-white rounded-xl max-w-md w-full p-6 h-[80vh] overflow-y-auto shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Create New Batch</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Plantain Variety
-                </label>
-                <select 
+        {/* Create Batch Modal */}
+        {showCreateBatch && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Create New Batch</h2>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-1">Plantain Variety</label>
+                <select
+                  className="w-full border rounded px-3 py-2"
                   value={newBatch.variety}
-                  onChange={(e) => setNewBatch({...newBatch, variety: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  onChange={e => setNewBatch({ ...newBatch, variety: e.target.value })}
+                  required
                 >
                   <option value="">Select variety</option>
                   <option value="French Horn">French Horn</option>
@@ -249,78 +277,73 @@ const FarmerDashboard = () => {
                   <option value="Orishele">Orishele</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantity (kg)
-                </label>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-1">Quantity (kg)</label>
                 <input
                   type="number"
+                  className="w-full border rounded px-3 py-2"
                   value={newBatch.quantity}
-                  onChange={(e) => setNewBatch({...newBatch, quantity: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  onChange={e => setNewBatch({ ...newBatch, quantity: e.target.value })}
+                  required
                   placeholder="Enter quantity in kg"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Harvest Date
-                </label>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-1">Harvest Date</label>
                 <input
                   type="date"
+                  className="w-full border rounded px-3 py-2"
                   value={newBatch.harvestDate}
-                  onChange={(e) => setNewBatch({...newBatch, harvestDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  onChange={e => setNewBatch({ ...newBatch, harvestDate: e.target.value })}
+                  required
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quality Notes
-                </label>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-1">Quality Notes</label>
                 <textarea
+                  className="w-full border rounded px-3 py-2"
                   value={newBatch.qualityNotes}
-                  onChange={(e) => setNewBatch({...newBatch, qualityNotes: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  rows="3"
+                  onChange={e => setNewBatch({ ...newBatch, qualityNotes: e.target.value })}
+                  rows={2}
                   placeholder="Add quality observations, certifications, etc."
                 />
               </div>
-
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600 mb-2">Upload harvest photos</p>
-                <button type="button" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                  Choose files
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-1">Upload Harvest Photo</label>
+                <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer ${isDragActive ? 'border-green-500 bg-green-50' : 'border-gray-300'}`}>
+                  <input {...getInputProps()} />
+                  {newBatch.image ? (
+                    <img src={newBatch.image} alt="Batch" className="mx-auto h-32 object-contain mb-2" />
+                  ) : (
+                    <>
+                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">Drag & drop or click to select a photo</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  onClick={() => setShowCreateBatch(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  onClick={handleCreateBatch}
+                  disabled={!newBatch.variety || !newBatch.quantity || !newBatch.harvestDate}
+                >
+                  Create
                 </button>
               </div>
             </div>
-
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={() => setShowCreateBatch(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateBatch} 
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Create Batch
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
 
 export default FarmerDashboard;
-
-
-// import React, { useState } from 'react';
-// import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Info } from 'lucide-react';
 

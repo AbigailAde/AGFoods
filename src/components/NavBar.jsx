@@ -27,7 +27,6 @@ export default function NavBar() {
     navigate('/login');
   };
 
-  // Determine dashboard title and icon based on route and user role
   let pageTitle = 'AGFoods';
   let pageIcon = <Leaf className="w-6 h-6 text-white" />;
   if (isAuthenticated && user && location.pathname.includes('dashboard')) {
@@ -36,16 +35,16 @@ export default function NavBar() {
   }
 
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <header className="bg-white shadow-sm border-b w-full">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link to="/" className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
               <Leaf className="w-6 h-6 text-white" />
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{pageTitle}</h1>
-              <p className="text-sm text-gray-600">Farm to Table Verification</p>
+              <h1 className="text-xl font-bold text-gray-900">AGFoods</h1>
+              (<span className="capitalize">{pageTitle}</span>)
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -71,8 +70,14 @@ export default function NavBar() {
               </>
             )}
             {isAuthenticated && user && (
-              <span className="text-gray-700 text-sm ml-4">{user.firstName} {user.lastName} (<span className="capitalize">{user.role}</span>)</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-600">{user?.firstName} {user?.lastName}</span>
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-semibold">S</span>
+                </div>
+              </div>
             )}
+            
             {isAuthenticated && (
               <button onClick={handleLogout} className="ml-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">Logout</button>
             )}
