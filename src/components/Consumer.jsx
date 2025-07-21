@@ -4,7 +4,6 @@ import PaystackButton from './Paystack';
 import { useAuth } from './AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-autoTable(jsPDF);
 
 const BATCHES_KEY = 'batches';
 const ORDERS_KEY = 'orders';
@@ -40,7 +39,6 @@ const CustomerOrderDashboard = () => {
     { id: 'premium', name: 'Premium', count: 4 }
   ];
 
-  // Mock distributors with products
   const distributors = [
     {
       id: 'dist-001',
@@ -244,63 +242,72 @@ const CustomerOrderDashboard = () => {
 
 
 
-  const ProductCard = ({ product }) => (
-    <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="text-3xl">{product.image}</div>
-          <div className="text-right">
-            <div className="flex items-center space-x-1 mb-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`w-3 h-3 ${
-                    star <= product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                  }`}
-                />
-              ))}
-              <span className="text-xs text-gray-600 ml-1">{product.rating}</span>
+  const ProductCard = ({ product }) => {
+    const isInCart = cart.some(item => item.id === product.id);
+    
+    return (
+      <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="text-3xl">{product.image}</div>
+            <div className="text-right">
+              <div className="flex items-center space-x-1 mb-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-3 h-3 ${
+                      star <= product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="text-xs text-gray-600 ml-1">{product.rating}</span>
+              </div>
+              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                {product.stock} in stock
+              </span>
             </div>
-            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-              {product.stock} in stock
-            </span>
-          </div>
-        </div>
-        
-        <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
-        <p className="text-sm text-gray-600 mb-2">{product.brand}</p>
-        <p className="text-xs text-gray-500 mb-3">{product.description}</p>
-        
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <span className="text-lg font-bold text-gray-900">₦{product.price.toLocaleString()}</span>
-            <span className="text-sm text-gray-500">/{product.unit}</span>
-          </div>
-          <div className="text-xs text-gray-500">
-            <MapPin className="w-3 h-3 inline mr-1" />
-            {product.distributor.location}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-gray-600">
-            <span>Farm: {product.farm}</span>
-            <span className="flex items-center">
-              <Truck className="w-3 h-3 mr-1" />
-              {product.distributor.deliveryTime}
-            </span>
           </div>
           
-          <button
-            onClick={() => addToCart(product)}
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors font-medium text-sm"
-          >
-            Add to Cart
-          </button>
+          <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
+          <p className="text-sm text-gray-600 mb-2">{product.brand}</p>
+          <p className="text-xs text-gray-500 mb-3">{product.description}</p>
+          
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="text-lg font-bold text-gray-900">₦{product.price.toLocaleString()}</span>
+              <span className="text-sm text-gray-500">/{product.unit}</span>
+            </div>
+            <div className="text-xs text-gray-500">
+              <MapPin className="w-3 h-3 inline mr-1" />
+              {product.distributor.location}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-gray-600">
+              <span>Farm: {product.farm}</span>
+              <span className="flex items-center">
+                <Truck className="w-3 h-3 mr-1" />
+                {product.distributor.deliveryTime}
+              </span>
+            </div>
+            
+            <button
+              onClick={() => addToCart(product)}
+              className={`w-full py-2 px-4 rounded-md transition-colors font-medium text-sm ${
+                isInCart 
+                  ? 'bg-green-100 text-green-700 border border-green-300 cursor-default' 
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+              disabled={isInCart}
+            >
+              {isInCart ? 'Added to Cart' : 'Add to Cart'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const CartItem = ({ item }) => (
     <div className="flex items-center space-x-4 py-3 border-b">
@@ -332,7 +339,6 @@ const CustomerOrderDashboard = () => {
     </div>
   );
 
-  // CSV export utility
   function exportToCSV(data, filename) {
     if (!data.length) return;
     const headers = Object.keys(data[0]);
