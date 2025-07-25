@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Wallet() {
     const [walletData, setWalletData] = useState();
-    const [accountId, setAccountId] = useState();
+    const [accountId, setAccountId] = useState(process.env.REACT_APP_MY_ACCOUNT_ID || ""); 
     const [tokenId, setTokenId] = useState();
     const [tokenSupply, setTokenSupply] = useState();
     const [contractId, setContractId] = useState();
@@ -117,14 +117,13 @@ function Wallet() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50">
-            <h1 className="header bg-white">Let's build a dapp on Hedera!</h1>
+            <h1 className="header text-green-500">AGFoods Demo</h1>
             <MyGroup
                 fcn={connectWallet}
                 buttonLabel={"Connect Wallet"}
                 text={connectTextSt}
                 link={connectLinkSt}
             />
-            <h2 className="sub-header">AGFoods Demo</h2>
 
             <MyGroup
                 fcn={tokenCreate}

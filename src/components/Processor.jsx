@@ -7,6 +7,8 @@ import autoTable from 'jspdf-autotable';
 const BATCHES_KEY = 'batches';
 const PROCESSING_KEY = 'processing';
 
+const processor = JSON.parse(localStorage.getItem('processing'))[0].processorId || 'Processor Name';
+
 const ProcessorDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
@@ -145,28 +147,6 @@ const ProcessorDashboard = () => {
   // In the JSX, use processingJobs for the main table, and incomingBatches for selection
   return (
     <div className="min-h-screen bg-gray-50 w-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Factory className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AGFoods</h1>
-                <p className="text-sm text-gray-600">Processor Dashboard</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-600">Welcome back, {user?.firstName} {user?.lastName}</span>
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">A</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Company Info Card */}
@@ -181,7 +161,7 @@ const ProcessorDashboard = () => {
               <div className="flex items-center space-x-6">
                 <div>
                   <p className="text-sm text-gray-500">Processor ID</p>
-                  <p className="font-semibold text-gray-900">Your Processor ID</p>
+                  <p className="font-semibold text-gray-900">{processor}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Monthly Revenue</p>
