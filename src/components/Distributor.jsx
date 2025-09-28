@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Building, Store, BarChart3, Users } from 'lucide-react';
 import { useAuth } from './AuthContext';
+import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Marketplace from './Marketplace';
 
 const ORDERS_KEY = 'orders';
 const BATCHES_KEY = 'batches';
+const PRODUCTS_KEY = 'products';
 
 const DistributorDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateOrder, setShowCreateOrder] = useState(false);
+  const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [distributorType, setDistributorType] = useState('wholesaler'); // 'wholesaler' or 'retailer'
   const [newOrder, setNewOrder] = useState({
     batchId: '',
@@ -20,16 +24,27 @@ const DistributorDashboard = () => {
     deliveryDate: '',
     specialInstructions: ''
   });
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    category: '',
+    quantity: '',
+    price: '',
+    description: '',
+    image: ''
+  });
   const [orders, setOrders] = useState([]);
   const [availableBatches, setAvailableBatches] = useState([]);
+  const [products, setProducts] = useState([]);
 
-  // Load orders and batches from localStorage for this distributor
+  // Load orders, batches, and products from localStorage for this distributor
   useEffect(() => {
     if (!user) return;
     const allOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
     setOrders(allOrders.filter(o => o.distributorId === user.id));
     const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
     setAvailableBatches(allBatches.filter(b => b.status === 'Ready' || b.status === 'Processing'));
+    const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+    setProducts(allProducts.filter(p => p.distributorId === user.id));
   }, [user]);
 
   // Save orders to localStorage
@@ -41,6 +56,48 @@ const DistributorDashboard = () => {
     localStorage.setItem(ORDERS_KEY, JSON.stringify(merged));
     setOrders(updatedOrders);
   };
+
+  // Save products to localStorage
+  const saveProducts = (updatedProducts) => {
+    const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+    // Remove this distributor's products, add updated
+    const filtered = allProducts.filter(p => p.distributorId !== user.id);
+    const merged = [...filtered, ...updatedProducts];
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(merged));
+    setProducts(updatedProducts);
+  };
+
+  // Create a new product
+  const handleCreateProduct = () => {
+    const product = {
+      id: 'DPROD-' + Date.now(),
+      distributorId: user.id,
+      name: newProduct.name,
+      category: newProduct.category,
+      quantity: newProduct.quantity,
+      price: newProduct.price,
+      description: newProduct.description,
+      image: newProduct.image,
+      status: 'Available',
+      createdAt: new Date().toISOString()
+    };
+    const updated = [product, ...products];
+    saveProducts(updated);
+    setShowCreateProduct(false);
+    setNewProduct({ name: '', category: '', quantity: '', price: '', description: '', image: '' });
+  };
+
+  // Image upload handler
+  const onDrop = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewProduct(product => ({ ...product, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] } });
 
   // Create a new order
   const handleCreateOrder = () => {
@@ -159,8 +216,8 @@ const DistributorDashboard = () => {
                 <button
                   onClick={() => setDistributorType('wholesaler')}
                   className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                    distributorType === 'wholesaler' 
-                      ? 'bg-white text-orange-600 shadow-sm' 
+                    distributorType === 'wholesaler'
+                      ? 'bg-white text-orange-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -170,8 +227,8 @@ const DistributorDashboard = () => {
                 <button
                   onClick={() => setDistributorType('retailer')}
                   className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                    distributorType === 'retailer' 
-                      ? 'bg-white text-orange-600 shadow-sm' 
+                    distributorType === 'retailer'
+                      ? 'bg-white text-orange-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -192,7 +249,39 @@ const DistributorDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`pb-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'overview'
+                  ? 'border-orange-500 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Factory className="inline-block w-5 h-5 mr-2" />
+              Distribution Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('marketplace')}
+              className={`pb-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'marketplace'
+                  ? 'border-orange-500 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <ShoppingCart className="inline-block w-5 h-5 mr-2" />
+              Marketplace
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      {activeTab === 'overview' && (
+      <div>
         {/* Company Info Card */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
           <div className="flex items-start justify-between">
@@ -212,9 +301,9 @@ const DistributorDashboard = () => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Monthly Revenue</p>
+                  <p className="text-sm text-gray-500">Total Products</p>
                   <p className="font-semibold text-orange-600">
-                    ₦0
+                    {products.length}
                   </p>
                 </div>
                 <div>
@@ -227,13 +316,22 @@ const DistributorDashboard = () => {
                 </div>
               </div>
             </div>
-            <button 
-              onClick={() => setShowCreateOrder(true)}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Order</span>
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCreateProduct(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Product</span>
+              </button>
+              <button
+                onClick={() => setShowCreateOrder(true)}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Order</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -325,6 +423,179 @@ const DistributorDashboard = () => {
             </table>
           </div>
         </div>
+
+        {/* Products Section */}
+        <div className="bg-white rounded-xl shadow-sm border mb-8">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Your Products</h3>
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
+                onClick={() => exportToCSV(products, 'products.csv')}
+                disabled={products.length === 0}
+              >
+                Export CSV
+              </button>
+              <button
+                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                onClick={() => exportToPDF(products, 'products.pdf')}
+                disabled={products.length === 0}
+              >
+                Export PDF
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (₦)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-400">No products yet. Click "Create Product" to add your first product.</td>
+                  </tr>
+                ) : (
+                  products.map(product => (
+                    <tr key={product.id}>
+                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{product.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">{product.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{product.category}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{product.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">₦{product.price}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                          <Package className="w-3 h-3 mr-1" />
+                          {product.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Create Product Modal */}
+        {showCreateProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Product</h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Product Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Enter product name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={newProduct.category}
+                    onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  >
+                    <option value="">Select category</option>
+                    <option value="Plantain Flour">Plantain Flour</option>
+                    <option value="Plantain Chips">Plantain Chips</option>
+                    <option value="Dried Plantain">Dried Plantain</option>
+                    <option value="Plantain Puree">Plantain Puree</option>
+                    <option value="Raw Plantain">Raw Plantain</option>
+                    <option value="Processed Foods">Processed Foods</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantity Available
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.quantity}
+                    onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="e.g., 500kg, 200 packs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Price per Unit (₦)
+                  </label>
+                  <input
+                    type="number"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Enter price"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    rows="3"
+                    placeholder="Product description, specifications, availability..."
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Upload Product Photo</label>
+                  <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer ${isDragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-300'}`}>
+                    <input {...getInputProps()} />
+                    {newProduct.image ? (
+                      <img src={newProduct.image} alt="Product" className="mx-auto h-32 object-contain mb-2" />
+                    ) : (
+                      <>
+                        <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-2">Drag & drop or click to select a photo</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => setShowCreateProduct(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateProduct}
+                  disabled={!newProduct.name || !newProduct.category || !newProduct.quantity || !newProduct.price}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Create Product
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Create Order Modal */}
         {showCreateOrder && (
@@ -419,6 +690,12 @@ const DistributorDashboard = () => {
           </div>
         )}
       </div>
+      )}
+
+      {/* Marketplace Tab */}
+      {activeTab === 'marketplace' && (
+        <Marketplace />
+      )}
     </div>
   );
 };

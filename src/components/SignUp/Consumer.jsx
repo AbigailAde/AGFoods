@@ -72,7 +72,7 @@ function OnboardConsumer() {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -352,7 +352,7 @@ function OnboardConsumer() {
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Account Created Successfully!</h1>
               <p className="text-gray-600 mb-6">
-                Welcome to AGFoods! Your {selectedType?.title.toLowerCase()} account has been created. 
+                Welcome to AGFoods! Your {selectedType?.title.toLowerCase()} account has been created.
                 You can now start using our blockchain-powered supply chain tracking platform.
               </p>
               <div className="space-y-3">
@@ -368,15 +368,6 @@ function OnboardConsumer() {
                 >
                   Create Another Account
                 </button>
-              </div>
-            </div>
-            
-            {/* Debug Info */}
-            <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left">
-              <h3 className="font-semibold text-gray-800 mb-2">Debug: Registered Users</h3>
-              <div className="text-sm text-gray-600 space-y-1">
-                {/* The userDatabase state was removed, so this section is no longer functional */}
-                <p>No registered users data available.</p>
               </div>
             </div>
           </div>

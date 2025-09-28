@@ -1,25 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Thermometer, Scale } from 'lucide-react';
+import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Thermometer, Scale, ClipboardList } from 'lucide-react';
 import { useAuth } from './AuthContext';
+import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Marketplace from './Marketplace';
+import OrderManager from './OrderManager';
 
 const BATCHES_KEY = 'batches';
 const PROCESSING_KEY = 'processing';
+const PRODUCTS_KEY = 'products';
 
 const ProcessorDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [showProcessBatch, setShowProcessBatch] = useState(false);
+  const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [newProcessing, setNewProcessing] = useState({
     batchId: '',
     processType: '',
     expectedYield: '',
     qualityGrade: '',
-    processingNotes: ''
+    processingNotes: '',
+    image: ''
   });
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    processType: '',
+    quantity: '',
+    price: '',
+    qualityGrade: '',
+    description: '',
+    image: ''
+  });
+
   const [incomingBatches, setIncomingBatches] = useState([]);
   const [processingJobs, setProcessingJobs] = useState([]);
+  const [products, setProducts] = useState([]);
 
   // Add processTypeInfo definition
   const processTypeInfo = {
@@ -29,13 +46,15 @@ const ProcessorDashboard = () => {
     'Plantain Puree': 'Smooth paste for baby food and industrial use. High-value processing with 60-65% yield rate.'
   };
 
-  // Load incoming batches and processing jobs from localStorage
+  // Load incoming batches, processing jobs, and products from localStorage
   useEffect(() => {
     if (!user) return;
     const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
     setIncomingBatches(allBatches.filter(b => b.status === 'Ready' || b.status === 'Incoming'));
     const allProcessing = JSON.parse(localStorage.getItem(PROCESSING_KEY) || '[]');
     setProcessingJobs(allProcessing.filter(p => p.processorId === user.id));
+    const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+    setProducts(allProducts.filter(p => p.processorId === user.id));
   }, [user]);
 
   // Save processing jobs to localStorage
@@ -48,6 +67,40 @@ const ProcessorDashboard = () => {
     setProcessingJobs(updatedJobs);
   };
 
+  // Save products to localStorage
+  const saveProducts = (updatedProducts) => {
+    const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+    // Remove this processor's products, add updated
+    const filtered = allProducts.filter(p => p.processorId !== user.id);
+    const merged = [...filtered, ...updatedProducts];
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(merged));
+    setProducts(updatedProducts);
+  };
+
+  // Image upload handler for products
+  const onDrop = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewProduct(product => ({ ...product, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] } });
+
+  // Image upload handler for processing
+  const onProcessingImageDrop = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewProcessing(processing => ({ ...processing, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+  const { getRootProps: getProcessingRootProps, getInputProps: getProcessingInputProps, isDragActive: isProcessingDragActive } = useDropzone({ onDrop: onProcessingImageDrop, accept: { 'image/*': [] } });
+
   // Start a new processing job
   const handleStartProcessing = () => {
     const batch = incomingBatches.find(b => b.id === newProcessing.batchId);
@@ -59,6 +112,7 @@ const ProcessorDashboard = () => {
       expectedYield: newProcessing.expectedYield,
       qualityGrade: newProcessing.qualityGrade,
       processingNotes: newProcessing.processingNotes,
+      image: newProcessing.image,
       status: 'Processing',
       startDate: new Date().toISOString(),
       createdAt: new Date().toISOString()
@@ -66,7 +120,28 @@ const ProcessorDashboard = () => {
     const updated = [job, ...processingJobs];
     saveProcessingJobs(updated);
     setShowProcessBatch(false);
-    setNewProcessing({ batchId: '', processType: '', expectedYield: '', qualityGrade: '', processingNotes: '' });
+    setNewProcessing({ batchId: '', processType: '', expectedYield: '', qualityGrade: '', processingNotes: '', image: '' });
+  };
+
+  // Create a new product
+  const handleCreateProduct = () => {
+    const product = {
+      id: 'PROD-' + Date.now(),
+      processorId: user.id,
+      name: newProduct.name,
+      processType: newProduct.processType,
+      quantity: newProduct.quantity,
+      price: newProduct.price,
+      qualityGrade: newProduct.qualityGrade,
+      description: newProduct.description,
+      image: newProduct.image,
+      status: 'Available',
+      createdAt: new Date().toISOString()
+    };
+    const updated = [product, ...products];
+    saveProducts(updated);
+    setShowCreateProduct(false);
+    setNewProduct({ name: '', processType: '', quantity: '', price: '', qualityGrade: '', description: '', image: '' });
   };
 
   // Stats
@@ -142,60 +217,81 @@ const ProcessorDashboard = () => {
     }
   };
 
-  // In the JSX, use processingJobs for the main table, and incomingBatches for selection
   return (
     <div className="min-h-screen bg-gray-50 w-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Factory className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AGFoods</h1>
-                <p className="text-sm text-gray-600">Processor Dashboard</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-600">Welcome back, {user?.firstName} {user?.lastName}</span>
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">A</span>
-              </div>
-            </div>
-          </div>
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8">
+            {[
+              { id: 'overview', label: 'Processing Overview', icon: <Factory className="w-4 h-4" /> },
+              { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart className="w-4 h-4" /> },
+              { id: 'orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 py-4 px-2 border-b-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
-      </header>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Tab Content */}
+      {activeTab === 'marketplace' && (
+        <Marketplace />
+      )}
+
+      {activeTab === 'orders' && (
+        <OrderManager userRole="processor" userId={user?.id} />
+      )}
+
+      {activeTab === 'overview' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Company Info Card */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Company Name</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Processing Facility</h2>
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
-                <span>Your Location</span>
+                <span>{user?.location || 'Your Location'}</span>
               </div>
               <div className="flex items-center space-x-6">
                 <div>
                   <p className="text-sm text-gray-500">Processor ID</p>
-                  <p className="font-semibold text-gray-900">Your Processor ID</p>
+                  <p className="font-semibold text-gray-900">{user?.id || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Monthly Revenue</p>
-                  <p className="font-semibold text-purple-600">₦0</p>
+                  <p className="text-sm text-gray-500">Total Products</p>
+                  <p className="font-semibold text-purple-600">{products.length}</p>
                 </div>
               </div>
             </div>
-            <button 
-              onClick={() => setShowProcessBatch(true)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Start Processing</span>
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCreateProduct(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Product</span>
+              </button>
+              <button
+                onClick={() => setShowProcessBatch(true)}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Start Processing</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -282,14 +378,14 @@ const ProcessorDashboard = () => {
                     </div>
                     <span className="text-sm font-medium text-purple-600">{process.progress}%</span>
                   </div>
-                  
+
                   <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                    <div 
-                      className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                    <div
+                      className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${process.progress}%` }}
                     ></div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Current Stage</p>
@@ -300,11 +396,18 @@ const ProcessorDashboard = () => {
                       <p className="font-medium">{process.currentYield} / {process.expectedYield}</p>
                     </div>
                   </div>
-                  
+
                   <div className="mt-3 text-sm">
                     <p className="text-gray-500">Expected Completion</p>
                     <p className="font-medium">{new Date(process.expectedCompletion).toLocaleDateString()}</p>
                   </div>
+
+                  {process.image && (
+                    <div className="mt-3">
+                      <p className="text-gray-500 text-sm mb-2">Processing Setup</p>
+                      <img src={process.image} alt="Processing Setup" className="w-full h-24 object-cover rounded-md" />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -376,7 +479,203 @@ const ProcessorDashboard = () => {
             </table>
           </div>
         </div>
-      </div>
+
+        {/* Products Section */}
+        <div className="bg-white rounded-xl shadow-sm border mb-8">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Your Products</h3>
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
+                onClick={() => exportToCSV(products, 'products.csv')}
+                disabled={products.length === 0}
+              >
+                Export CSV
+              </button>
+              <button
+                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                onClick={() => exportToPDF(products, 'products.pdf')}
+                disabled={products.length === 0}
+              >
+                Export PDF
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (₦)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-gray-400">No products yet. Click "Create Product" to add your first product.</td>
+                  </tr>
+                ) : (
+                  products.map(product => (
+                    <tr key={product.id}>
+                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{product.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">{product.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{product.processType}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{product.quantity} kg</td>
+                      <td className="px-6 py-4 whitespace-nowrap">₦{product.price}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getQualityColor(product.qualityGrade)}`}>
+                          {product.qualityGrade}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                          <Package className="w-3 h-3 mr-1" />
+                          {product.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </div>
+      )}
+
+      {/* Create Product Modal */}
+      {showCreateProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Product</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Enter product name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Process Type
+                </label>
+                <select
+                  value={newProduct.processType}
+                  onChange={(e) => setNewProduct({...newProduct, processType: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="">Select type</option>
+                  <option value="Plantain Flour">Plantain Flour</option>
+                  <option value="Plantain Chips">Plantain Chips</option>
+                  <option value="Dried Plantain">Dried Plantain</option>
+                  <option value="Plantain Puree">Plantain Puree</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quantity (kg)
+                </label>
+                <input
+                  type="number"
+                  value={newProduct.quantity}
+                  onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Enter quantity"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price per kg (₦)
+                </label>
+                <input
+                  type="number"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Enter price"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quality Grade
+                </label>
+                <select
+                  value={newProduct.qualityGrade}
+                  onChange={(e) => setNewProduct({...newProduct, qualityGrade: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="">Select quality grade</option>
+                  <option value="A+">A+ - Premium Quality</option>
+                  <option value="A">A - High Quality</option>
+                  <option value="B+">B+ - Good Quality</option>
+                  <option value="B">B - Standard Quality</option>
+                  <option value="C">C - Below Standard</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  rows="3"
+                  placeholder="Product description, features, certifications..."
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Product Photo</label>
+                <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer ${isDragActive ? 'border-green-500 bg-green-50' : 'border-gray-300'}`}>
+                  <input {...getInputProps()} />
+                  {newProduct.image ? (
+                    <img src={newProduct.image} alt="Product" className="mx-auto h-32 object-contain mb-2" />
+                  ) : (
+                    <>
+                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">Drag & drop or click to select a photo</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => setShowCreateProduct(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProduct}
+                disabled={!newProduct.name || !newProduct.processType || !newProduct.quantity || !newProduct.price}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Start Processing Modal */}
       {showProcessBatch && (
@@ -389,13 +688,13 @@ const ProcessorDashboard = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Start New Processing</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Select Batch
                 </label>
-                <select 
+                <select
                   value={newProcessing.batchId}
                   onChange={(e) => setNewProcessing({...newProcessing, batchId: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -413,7 +712,7 @@ const ProcessorDashboard = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Processing Type
                 </label>
-                <select 
+                <select
                   value={newProcessing.processType}
                   onChange={(e) => setNewProcessing({...newProcessing, processType: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -451,7 +750,7 @@ const ProcessorDashboard = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Quality Grade
                 </label>
-                <select 
+                <select
                   value={newProcessing.qualityGrade}
                   onChange={(e) => setNewProcessing({...newProcessing, qualityGrade: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -478,12 +777,22 @@ const ProcessorDashboard = () => {
                 />
               </div>
 
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600 mb-2">Upload processing setup photos</p>
-                <button type="button" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
-                  Choose files
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Upload Processing Setup Photos
+                </label>
+                <div {...getProcessingRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer ${isProcessingDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-300'}`}>
+                  <input {...getProcessingInputProps()} />
+                  {newProcessing.image ? (
+                    <img src={newProcessing.image} alt="Processing Setup" className="mx-auto h-32 object-contain mb-2" />
+                  ) : (
+                    <>
+                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">Drag & drop or click to select a photo</p>
+                      <p className="text-xs text-gray-500">Upload photos of your processing setup</p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -495,7 +804,7 @@ const ProcessorDashboard = () => {
                 Cancel
               </button>
               <button
-                onClick={handleStartProcessing} 
+                onClick={handleStartProcessing}
                 className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 Start Processing
