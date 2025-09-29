@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Building, Store, BarChart3, Users } from 'lucide-react';
+import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Building, Store, BarChart3, Users, History, Shield, Link } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Marketplace from './Marketplace';
+import ProductHistory from './ProductHistory';
+import KYCVerification from './KYCVerification';
+import VerificationBadge from './VerificationBadge';
+import SmartContractDashboard from './SmartContractDashboard';
+import TraceabilityQRCode from './TraceabilityQRCode';
+import NavigationTabs from './NavigationTabs';
+import { addTraceabilityEvent, TRACE_EVENT_TYPES, getBatchTraceability } from '../utils/traceabilityUtils';
 
 const ORDERS_KEY = 'orders';
 const BATCHES_KEY = 'batches';
@@ -117,8 +124,109 @@ const DistributorDashboard = () => {
     };
     const updated = [order, ...orders];
     saveOrders(updated);
+
+    // Add traceability event for distribution order creation
+    if (batch) {
+      addTraceabilityEvent(
+        newOrder.batchId,
+        TRACE_EVENT_TYPES.DISTRIBUTED,
+        {
+          userName: `${user.firstName} ${user.lastName}`,
+          description: `Distribution order created: ${newOrder.orderType}`,
+          location: user.location || 'Distribution Center',
+          details: {
+            orderType: newOrder.orderType,
+            quantity: newOrder.quantity,
+            destination: newOrder.destination,
+            deliveryDate: newOrder.deliveryDate,
+            specialInstructions: newOrder.specialInstructions,
+            orderId: order.id,
+            distributorCompany: user.companyName || 'Distribution Company'
+          }
+        },
+        user.id,
+        'distributor'
+      );
+    }
+
     setShowCreateOrder(false);
     setNewOrder({ batchId: '', orderType: '', quantity: '', destination: '', deliveryDate: '', specialInstructions: '' });
+  };
+
+  const markOrderShipped = (orderId) => {
+    const updated = orders.map(order => {
+      if (order.id === orderId) {
+        const shippedOrder = {
+          ...order,
+          status: 'In Transit',
+          shippedDate: new Date().toISOString()
+        };
+
+        // Add traceability event for shipment
+        addTraceabilityEvent(
+          order.batchId,
+          TRACE_EVENT_TYPES.DISTRIBUTED,
+          {
+            userName: `${user.firstName} ${user.lastName}`,
+            description: `Product shipped to ${order.destination}`,
+            location: user.location || 'Distribution Center',
+            details: {
+              orderType: order.orderType,
+              quantity: order.quantity,
+              destination: order.destination,
+              trackingInfo: `Shipped from ${user.location || 'Distribution Center'}`,
+              orderId: order.id,
+              distributorCompany: user.companyName || 'Distribution Company',
+              shippedDate: new Date().toISOString()
+            }
+          },
+          user.id,
+          'distributor'
+        );
+
+        return shippedOrder;
+      }
+      return order;
+    });
+    saveOrders(updated);
+  };
+
+  const markOrderDelivered = (orderId) => {
+    const updated = orders.map(order => {
+      if (order.id === orderId) {
+        const deliveredOrder = {
+          ...order,
+          status: 'Delivered',
+          deliveredDate: new Date().toISOString()
+        };
+
+        // Add traceability event for delivery
+        addTraceabilityEvent(
+          order.batchId,
+          TRACE_EVENT_TYPES.DISTRIBUTED,
+          {
+            userName: `${user.firstName} ${user.lastName}`,
+            description: `Product delivered to ${order.destination}`,
+            location: order.destination,
+            details: {
+              orderType: order.orderType,
+              quantity: order.quantity,
+              destination: order.destination,
+              deliveryConfirmation: 'Product successfully delivered',
+              orderId: order.id,
+              distributorCompany: user.companyName || 'Distribution Company',
+              deliveredDate: new Date().toISOString()
+            }
+          },
+          user.id,
+          'distributor'
+        );
+
+        return deliveredOrder;
+      }
+      return order;
+    });
+    saveOrders(updated);
   };
 
   // Stats
@@ -250,34 +358,18 @@ const DistributorDashboard = () => {
       </header>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`pb-4 px-2 border-b-2 font-medium text-sm ${
-                activeTab === 'overview'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Factory className="inline-block w-5 h-5 mr-2" />
-              Distribution Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('marketplace')}
-              className={`pb-4 px-2 border-b-2 font-medium text-sm ${
-                activeTab === 'marketplace'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <ShoppingCart className="inline-block w-5 h-5 mr-2" />
-              Marketplace
-            </button>
-          </div>
-        </div>
-      </div>
+      <NavigationTabs
+        tabs={[
+          { id: 'overview', label: 'Distribution Overview', icon: <Factory className="w-4 h-4" /> },
+          { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart className="w-4 h-4" /> },
+          { id: 'traceability', label: 'Traceability', icon: <History className="w-4 h-4" /> },
+          { id: 'verification', label: 'KYC/Verification', icon: <Shield className="w-4 h-4" /> },
+          { id: 'blockchain', label: 'Smart Contract', icon: <Link className="w-4 h-4" /> }
+        ]}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        colorScheme="orange"
+      />
 
       {/* Main Content */}
       {activeTab === 'overview' && (
@@ -292,6 +384,13 @@ const DistributorDashboard = () => {
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
                 <span>{user?.location || 'Your Location'}</span>
+              </div>
+              <div className="mb-4">
+                <VerificationBadge
+                  status={user?.verification?.status}
+                  level={user?.verification?.level}
+                  size="md"
+                />
               </div>
               <div className="flex items-center space-x-6">
                 <div>
@@ -392,12 +491,13 @@ const DistributorDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Special Instructions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-8 text-gray-400">No orders yet. Click "Create Order" to add your first order.</td>
+                    <td colSpan={10} className="text-center py-8 text-gray-400">No orders yet. Click "Create Order" to add your first order.</td>
                   </tr>
                 ) : (
                   orders.map(order => (
@@ -416,6 +516,33 @@ const DistributorDashboard = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">{order.specialInstructions}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex space-x-2">
+                          {order.status === 'Preparing' && (
+                            <button
+                              onClick={() => markOrderShipped(order.id)}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                              title="Mark as Shipped"
+                            >
+                              <Truck className="w-4 h-4" />
+                            </button>
+                          )}
+                          {order.status === 'In Transit' && (
+                            <button
+                              onClick={() => markOrderDelivered(order.id)}
+                              className="text-green-600 hover:text-green-800 text-sm"
+                              title="Mark as Delivered"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                          {order.status === 'Delivered' && (
+                            <span className="text-green-600 text-sm">
+                              <CheckCircle className="w-4 h-4" />
+                            </span>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -455,12 +582,13 @@ const DistributorDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (₦)</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
                 </tr>
               </thead>
               <tbody>
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-400">No products yet. Click "Create Product" to add your first product.</td>
+                    <td colSpan={7} className="text-center py-8 text-gray-400">No products yet. Click "Create Product" to add your first product.</td>
                   </tr>
                 ) : (
                   products.map(product => (
@@ -475,6 +603,14 @@ const DistributorDashboard = () => {
                           <Package className="w-3 h-3 mr-1" />
                           {product.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <TraceabilityQRCode
+                          batchId={product.id}
+                          productName={product.name}
+                          size={60}
+                          showDetails={true}
+                        />
                       </td>
                     </tr>
                   ))
@@ -695,6 +831,60 @@ const DistributorDashboard = () => {
       {/* Marketplace Tab */}
       {activeTab === 'marketplace' && (
         <Marketplace />
+      )}
+
+      {/* Traceability Tab */}
+      {activeTab === 'traceability' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Product Traceability</h2>
+              <p className="text-gray-600 mt-1">
+                Track and add to the journey of products through the supply chain
+              </p>
+            </div>
+            <div className="p-6">
+              <ProductHistory
+                batchId={availableBatches[0]?.id || ''}
+                compact={false}
+                showAddEvent={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Tab */}
+      {activeTab === 'verification' && (
+        <div className="space-y-6">
+          <KYCVerification />
+        </div>
+      )}
+
+      {/* Blockchain Tab */}
+      {activeTab === 'blockchain' && (
+        <div className="space-y-6">
+          <SmartContractDashboard
+            user={user}
+            products={[...availableBatches, ...products]}
+            onTransactionComplete={(data) => {
+              // Handle blockchain transaction completion
+              console.log('Blockchain transaction completed:', data);
+
+              // If it's a traceability creation, update the relevant data
+              if (data.type === 'traceability_created' && data.product) {
+                // Update products if they contain the product
+                const updatedProducts = products.map(p =>
+                  p.id === data.product.id
+                    ? { ...p, traceabilityData: data.traceabilityData }
+                    : p
+                );
+                setProducts(updatedProducts);
+                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(updatedProducts));
+              }
+            }}
+          />
+        </div>
       )}
     </div>
   );

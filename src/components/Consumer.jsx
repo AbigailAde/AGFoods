@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, MapPin, Calendar, Shield, Star, Truck, Factory, Leaf, Phone, Mail, Award, Filter, Search, Plus, Minus, CreditCard, User, Clock, Package } from 'lucide-react';
+import { ShoppingCart, MapPin, Calendar, Shield, Star, Truck, Factory, Filter, Search, Plus, Minus, CreditCard, User, Package, History, MessageCircle, Link, Phone } from 'lucide-react';
 import PaystackButton from './Paystack';
 import { useAuth } from './AuthContext';
-import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Marketplace from './Marketplace';
+import ProductHistory from './ProductHistory';
+import KYCVerification from './KYCVerification';
+import VerificationBadge from './VerificationBadge';
+import SmartContractDashboard from './SmartContractDashboard';
+import BlockchainPayment from './BlockchainPayment';
+import TraceabilityQRCode from './TraceabilityQRCode';
+import NavigationTabs from './NavigationTabs';
+import NotificationSystem, { useNotifications } from './NotificationSystem';
+import ConfirmationDialog, { useConfirmation } from './ConfirmationDialog';
+import { addTraceabilityEvent, TRACE_EVENT_TYPES } from '../utils/traceabilityUtils';
 
 const BATCHES_KEY = 'batches';
 const ORDERS_KEY = 'orders';
@@ -43,7 +52,13 @@ const CustomerOrderDashboard = () => {
   const [orderHistory, setOrderHistory] = useState([]);
   const [productRequests, setProductRequests] = useState([]);
 
-  // Mock product categories
+  // Blockchain wallet state
+  const [walletData, setWalletData] = useState(null);
+  const [accountId, setAccountId] = useState('');
+
+  // UI/UX improvements
+  const notifications = useNotifications();
+  const { ConfirmationDialog } = useConfirmation();  // Mock product categories
   const categories = [
     { id: 'all', name: 'All Products', count: 15 },
     { id: 'flour', name: 'Flour Products', count: 8 },
@@ -288,6 +303,93 @@ const CustomerOrderDashboard = () => {
     const updated = [order, ...allOrders];
     localStorage.setItem(ORDERS_KEY, JSON.stringify(updated));
     setOrderHistory([order, ...orderHistory]);
+
+    // Add traceability events for each product in the cart
+    cart.forEach(item => {
+      if (item.batchId) {
+        addTraceabilityEvent(
+          item.batchId,
+          TRACE_EVENT_TYPES.CONSUMER_FEEDBACK,
+          {
+            userName: `${user.firstName} ${user.lastName}`,
+            description: `Product ordered by consumer`,
+            location: orderData.address,
+            details: {
+              productName: item.name,
+              quantity: item.quantity,
+              orderValue: item.price * item.quantity,
+              customerInfo: {
+                name: orderData.customerName,
+                email: orderData.email,
+                phone: orderData.phone,
+                address: orderData.address
+              },
+              orderId: order.id,
+              orderDate: new Date().toISOString()
+            }
+          },
+          user.id,
+          'consumer'
+        );
+      }
+    });
+  };
+
+  const confirmDelivery = (orderId, batchId, rating = 5, feedback = '') => {
+    // Update order status
+    const allOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
+    const updatedOrders = allOrders.map(order =>
+      order.id === orderId ? { ...order, status: 'Delivered', deliveredDate: new Date().toISOString() } : order
+    );
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+
+    // Update local state
+    setOrderHistory(prev => prev.map(order =>
+      order.id === orderId ? { ...order, status: 'Delivered', deliveredDate: new Date().toISOString() } : order
+    ));
+
+    // Add delivery confirmation traceability event
+    if (batchId) {
+      addTraceabilityEvent(
+        batchId,
+        TRACE_EVENT_TYPES.CONSUMER_FEEDBACK,
+        {
+          userName: `${user.firstName} ${user.lastName}`,
+          description: `Delivery confirmed with ${rating}/5 stars`,
+          location: user.address || 'Consumer Location',
+          details: {
+            deliveryConfirmed: true,
+            rating: rating,
+            feedback: feedback,
+            orderId: orderId,
+            deliveryDate: new Date().toISOString(),
+            customerSatisfaction: rating >= 4 ? 'Satisfied' : rating >= 3 ? 'Average' : 'Needs Improvement'
+          }
+        },
+        user.id,
+        'consumer'
+      );
+    }
+  };
+
+  const addProductFeedback = (batchId, rating, feedback) => {
+    addTraceabilityEvent(
+      batchId,
+      TRACE_EVENT_TYPES.CONSUMER_FEEDBACK,
+      {
+        userName: `${user.firstName} ${user.lastName}`,
+        description: `Consumer feedback: ${rating}/5 stars`,
+        location: user.address || 'Consumer Location',
+        details: {
+          rating: rating,
+          feedback: feedback,
+          feedbackDate: new Date().toISOString(),
+          customerSatisfaction: rating >= 4 ? 'Satisfied' : rating >= 3 ? 'Average' : 'Needs Improvement'
+        }
+      },
+      user.id,
+      'consumer'
+    );
   };
 
 
@@ -340,6 +442,20 @@ const CustomerOrderDashboard = () => {
                 <Truck className="w-3 h-3 mr-1" />
                 {product.distributor.deliveryTime}
               </span>
+            </div>
+
+            {/* Traceability QR Code */}
+            <div className="flex items-center justify-between text-xs bg-blue-50 p-2 rounded-md">
+              <div>
+                <p className="font-medium text-blue-800">Batch Traceability</p>
+                <p className="text-blue-600">Batch: {product.batchId || `BT${product.id.slice(-6)}`}</p>
+              </div>
+              <TraceabilityQRCode
+                batchId={product.batchId || `BT${product.id.slice(-6)}`}
+                productName={product.name}
+                size={50}
+                showDetails={false}
+              />
             </div>
 
             <button
@@ -415,33 +531,56 @@ const CustomerOrderDashboard = () => {
     doc.save(filename);
   }
 
+  const navigationTabs = [
+    { id: 'browse', label: 'Browse Products', icon: <Package className="w-4 h-4" /> },
+    { id: 'cart', label: `Cart (${cart.length})`, icon: <ShoppingCart className="w-4 h-4" /> },
+    { id: 'orders', label: 'My Orders', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'requests', label: `Requests (${productRequests.length})`, icon: <Plus className="w-4 h-4" /> },
+    { id: 'distributors', label: 'Distributors', icon: <Truck className="w-4 h-4" /> },
+    { id: 'traceability', label: 'Product History', icon: <History className="w-4 h-4" /> },
+    { id: 'verification', label: 'KYC/Verification', icon: <Shield className="w-4 h-4" /> },
+    { id: 'marketplace', label: 'Marketplace', icon: <Factory className="w-4 h-4" /> },
+    { id: 'blockchain', label: 'Smart Contract', icon: <Link className="w-4 h-4" /> }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 w-full">
-      <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'browse', label: 'Browse Products', icon: <Package className="w-4 h-4" /> },
-              { id: 'cart', label: `Cart (${cart.length})`, icon: <ShoppingCart className="w-4 h-4" /> },
-              { id: 'orders', label: 'My Orders', icon: <Calendar className="w-4 h-4" /> },
-              { id: 'requests', label: `Requests (${productRequests.length})`, icon: <Plus className="w-4 h-4" /> },
-              { id: 'distributors', label: 'Distributors', icon: <Truck className="w-4 h-4" /> },
-              { id: 'marketplace', label: 'Marketplace', icon: <Factory className="w-4 h-4" /> }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-green-500 text-green-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
+      <NavigationTabs
+        tabs={navigationTabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        colorScheme="green"
+      />
+
+      {/* User Profile Header */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {user?.firstName} {user?.lastName}
+                </h2>
+                <p className="text-sm text-gray-600">Consumer Account</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <VerificationBadge
+                status={user?.verification?.status}
+                level={user?.verification?.level}
+                size="md"
+              />
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Member since</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -620,9 +759,88 @@ const CustomerOrderDashboard = () => {
         )}
 
         {activeTab === 'orders' && (
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No orders yet. Place your first order to see it here!</p>
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="px-6 py-4 border-b">
+                <h2 className="text-xl font-bold text-gray-900">Order History</h2>
+                <p className="text-gray-600">Track your orders and provide feedback</p>
+              </div>
+
+              {orderHistory.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No orders yet. Place your first order to see it here!</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {orderHistory.map(order => (
+                    <div key={order.id} className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Order #{order.id}</h4>
+                          <p className="text-sm text-gray-500">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                            order.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                          {order.deliveredDate && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Delivered {new Date(order.deliveredDate).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600">
+                          <strong>Delivery Address:</strong> {order.address}, {order.city}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <strong>Phone:</strong> {order.phone}
+                        </p>
+                      </div>
+
+                      <div className="flex space-x-3">
+                        {order.status === 'In Transit' && (
+                          <button
+                            onClick={() => confirmDelivery(order.id, order.batchId || '', 5, 'Product delivered successfully')}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center space-x-1"
+                          >
+                            <Package className="w-4 h-4" />
+                            <span>Confirm Delivery</span>
+                          </button>
+                        )}
+                        {order.status === 'Delivered' && (
+                          <button
+                            onClick={() => addProductFeedback(order.batchId || '', 5, 'Great product quality!')}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center space-x-1"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>Leave Feedback</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (order.batchId) {
+                              setActiveTab('traceability');
+                            }
+                          }}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center space-x-1"
+                        >
+                          <History className="w-4 h-4" />
+                          <span>View Product History</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -739,7 +957,10 @@ const CustomerOrderDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleOrderSubmit} className="p-6 space-y-6">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleOrderSubmit(orderForm);
+            }} className="p-6 space-y-6">
               {/* Customer Information */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -842,7 +1063,9 @@ const CustomerOrderDashboard = () => {
                   {[
                     { id: 'card', label: 'Credit/Debit Card', desc: 'Pay securely with your card' },
                     { id: 'transfer', label: 'Bank Transfer', desc: 'Direct bank transfer' },
-                    { id: 'cash', label: 'Cash on Delivery', desc: 'Pay when you receive your order' }
+                    { id: 'cash', label: 'Cash on Delivery', desc: 'Pay when you receive your order' },
+                    { id: 'hbar', label: 'HBAR (Blockchain)', desc: 'Pay with HBAR cryptocurrency', icon: '⚡' },
+                    { id: 'escrow', label: 'HBAR Escrow', desc: 'Secure escrow payment with HBAR', icon: '🔒' }
                   ].map(method => (
                     <div key={method.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
                       <input
@@ -855,7 +1078,10 @@ const CustomerOrderDashboard = () => {
                         className="text-green-600 focus:ring-green-500"
                       />
                       <label htmlFor={method.id} className="flex-1 cursor-pointer">
-                        <div className="font-medium text-gray-900">{method.label}</div>
+                        <div className="font-medium text-gray-900 flex items-center">
+                          {method.icon && <span className="mr-2">{method.icon}</span>}
+                          {method.label}
+                        </div>
                         <div className="text-sm text-gray-600">{method.desc}</div>
                       </label>
                     </div>
@@ -911,32 +1137,83 @@ const CustomerOrderDashboard = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                >
-                  Place Order
-                </button>
-                <PaystackButton
-                  email={orderForm.email}
-                  amount={getTotalPrice() + getDeliveryFee()}
-                  onSuccessCallback={(reference) => {
-                    alert(`Order placed successfully! Ref: ${reference.reference}`);
-                    setCart([]);
-                    setShowOrderForm(false);
-                    setOrderForm({
-                      customerName: '',
-                      email: '',
-                      phone: '',
-                      address: '',
-                      city: '',
-                      state: '',
-                      deliveryDate: '',
-                      paymentMethod: 'card',
-                      specialInstructions: ''
-                    });
-                  }}
-                />
+
+                {/* Conditional Payment Rendering */}
+                {(orderForm.paymentMethod === 'hbar' || orderForm.paymentMethod === 'escrow') ? (
+                  <div className="flex-2">
+                    <BlockchainPayment
+                      amount={getTotalPrice() + getDeliveryFee()}
+                      orderId={`ORD-${Date.now()}`}
+                      paymentMethod={orderForm.paymentMethod}
+                      onSuccess={(paymentResult) => {
+                        // Handle successful blockchain payment
+                        const orderData = {
+                          ...orderForm,
+                          items: cart,
+                          total: getTotalPrice() + getDeliveryFee(),
+                          paymentReference: paymentResult.transactionId,
+                          blockchainPayment: true,
+                          paymentResult: paymentResult
+                        };
+                        handleOrderSubmit(orderData);
+                        notifications.showSuccess(
+                          'Payment Successful!',
+                          `Your blockchain payment has been processed. Transaction ID: ${paymentResult.transactionId}`
+                        );
+                        setCart([]);
+                        setShowOrderForm(false);
+                        setOrderForm({
+                          customerName: '',
+                          email: '',
+                          phone: '',
+                          address: '',
+                          city: '',
+                          state: '',
+                          deliveryDate: '',
+                          paymentMethod: 'card',
+                          specialInstructions: ''
+                        });
+                      }}
+                      onError={(error) => {
+                        notifications.showError(
+                          'Payment Failed',
+                          `There was an issue processing your blockchain payment: ${error}`
+                        );
+                      }}
+                      walletData={walletData}
+                      accountId={accountId}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="submit"
+                      className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    >
+                      Place Order
+                    </button>
+                    <PaystackButton
+                      email={orderForm.email}
+                      amount={getTotalPrice() + getDeliveryFee()}
+                      onSuccessCallback={(reference) => {
+                        alert(`Order placed successfully! Ref: ${reference.reference}`);
+                        setCart([]);
+                        setShowOrderForm(false);
+                        setOrderForm({
+                          customerName: '',
+                          email: '',
+                          phone: '',
+                          address: '',
+                          city: '',
+                          state: '',
+                          deliveryDate: '',
+                          paymentMethod: 'card',
+                          specialInstructions: ''
+                        });
+                      }}
+                    />
+                  </>
+                )}
               </div>
             </form>
           </div>
@@ -1058,10 +1335,88 @@ const CustomerOrderDashboard = () => {
         </div>
       )}
 
+      {/* Traceability Tab */}
+      {activeTab === 'traceability' && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-xl shadow-sm border">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Product Traceability & History</h2>
+              <p className="text-gray-600 mt-1">
+                Track your products and leave feedback about your experience
+              </p>
+            </div>
+            <div className="p-6">
+              <ProductHistory
+                batchId={products[0]?.batchId || ''}
+                compact={false}
+                showAddEvent={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Tab */}
+      {activeTab === 'verification' && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <KYCVerification />
+        </div>
+      )}
+
       {/* Marketplace Tab */}
       {activeTab === 'marketplace' && (
         <Marketplace />
       )}
+
+      {/* Blockchain Tab */}
+      {activeTab === 'blockchain' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <SmartContractDashboard
+            user={user}
+            products={cart}
+            onWalletConnect={(walletData, accountId) => {
+              setWalletData(walletData);
+              setAccountId(accountId);
+            }}
+            onTransactionComplete={(data) => {
+              // Handle blockchain transaction completion
+              console.log('Blockchain transaction completed:', data);
+
+              // If it's a payment processing, handle completion
+              if (data.type === 'payment_processed') {
+                alert('Payment processed successfully on blockchain!');
+                // Clear cart after successful payment
+                setCart([]);
+                localStorage.removeItem('cart');
+
+                // Add to orders
+                const newOrder = {
+                  id: Date.now().toString(),
+                  items: cart,
+                  total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+                  status: 'Processing',
+                  date: new Date().toISOString(),
+                  transactionId: data.result?.transactionId,
+                  paymentMethod: 'HBAR'
+                };
+
+                const updatedOrders = [...orderHistory, newOrder];
+                setOrderHistory(updatedOrders);
+                localStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+              }
+            }}
+          />
+        </div>
+      )}
+
+      {/* Notification System */}
+      <NotificationSystem
+        notifications={notifications.notifications}
+        onDismiss={notifications.removeNotification}
+      />
+
+      {/* Confirmation Dialog */}
+      {ConfirmationDialog}
     </div>
   );
 };

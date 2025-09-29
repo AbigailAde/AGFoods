@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Thermometer, Scale, ClipboardList } from 'lucide-react';
+import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Thermometer, Scale, ClipboardList, History, Shield, Link } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Marketplace from './Marketplace';
 import OrderManager from './OrderManager';
+import ProductHistory from './ProductHistory';
+import KYCVerification from './KYCVerification';
+import VerificationBadge from './VerificationBadge';
+import SmartContractDashboard from './SmartContractDashboard';
+import TraceabilityQRCode from './TraceabilityQRCode';
+import NavigationTabs from './NavigationTabs';
+import NotificationSystem, { useNotifications } from './NotificationSystem';
+import { addTraceabilityEvent, TRACE_EVENT_TYPES } from '../utils/traceabilityUtils';
 
 const BATCHES_KEY = 'batches';
 const PROCESSING_KEY = 'processing';
@@ -14,6 +22,10 @@ const PRODUCTS_KEY = 'products';
 const ProcessorDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // UI/UX improvements
+  const notifications = useNotifications();
+
   const [showProcessBatch, setShowProcessBatch] = useState(false);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [newProcessing, setNewProcessing] = useState({
@@ -119,6 +131,30 @@ const ProcessorDashboard = () => {
     };
     const updated = [job, ...processingJobs];
     saveProcessingJobs(updated);
+
+    // Add traceability event for processing start
+    if (batch) {
+      addTraceabilityEvent(
+        newProcessing.batchId,
+        TRACE_EVENT_TYPES.PROCESSED,
+        {
+          userName: `${user.firstName} ${user.lastName}`,
+          description: `Processing started: ${newProcessing.processType}`,
+          location: user.location || 'Processing Facility',
+          details: {
+            processType: newProcessing.processType,
+            expectedYield: newProcessing.expectedYield,
+            qualityGrade: newProcessing.qualityGrade,
+            processingNotes: newProcessing.processingNotes,
+            processingId: job.id
+          },
+          images: newProcessing.image ? [newProcessing.image] : []
+        },
+        user.id,
+        'processor'
+      );
+    }
+
     setShowProcessBatch(false);
     setNewProcessing({ batchId: '', processType: '', expectedYield: '', qualityGrade: '', processingNotes: '', image: '' });
   };
@@ -142,6 +178,44 @@ const ProcessorDashboard = () => {
     saveProducts(updated);
     setShowCreateProduct(false);
     setNewProduct({ name: '', processType: '', quantity: '', price: '', qualityGrade: '', description: '', image: '' });
+  };
+
+  const markJobCompleted = (jobId) => {
+    const updated = processingJobs.map(job => {
+      if (job.id === jobId) {
+        const completedJob = {
+          ...job,
+          status: 'Completed',
+          completedDate: new Date().toISOString()
+        };
+
+        // Add traceability event for processing completion
+        addTraceabilityEvent(
+          job.batchId,
+          TRACE_EVENT_TYPES.PROCESSED,
+          {
+            userName: `${user.firstName} ${user.lastName}`,
+            description: `Processing completed: ${job.processType}`,
+            location: user.location || 'Processing Facility',
+            details: {
+              processType: job.processType,
+              actualYield: job.expectedYield,
+              qualityGrade: job.qualityGrade,
+              processingNotes: job.processingNotes,
+              processingId: job.id,
+              completionStatus: 'Successfully completed processing'
+            },
+            images: job.image ? [job.image] : []
+          },
+          user.id,
+          'processor'
+        );
+
+        return completedJob;
+      }
+      return job;
+    });
+    saveProcessingJobs(updated);
   };
 
   // Stats
@@ -217,33 +291,24 @@ const ProcessorDashboard = () => {
     }
   };
 
+  const navigationTabs = [
+    { id: 'overview', label: 'Processing Overview', icon: <Factory className="w-4 h-4" /> },
+    { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart className="w-4 h-4" /> },
+    { id: 'orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> },
+    { id: 'traceability', label: 'Traceability', icon: <History className="w-4 h-4" /> },
+    { id: 'verification', label: 'KYC/Verification', icon: <Shield className="w-4 h-4" /> },
+    { id: 'blockchain', label: 'Smart Contract', icon: <Link className="w-4 h-4" /> }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 w-full">
       {/* Navigation Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'overview', label: 'Processing Overview', icon: <Factory className="w-4 h-4" /> },
-              { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart className="w-4 h-4" /> },
-              { id: 'orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-purple-500 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+      <NavigationTabs
+        tabs={navigationTabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        colorScheme="purple"
+      />
 
       {/* Tab Content */}
       {activeTab === 'marketplace' && (
@@ -252,6 +317,68 @@ const ProcessorDashboard = () => {
 
       {activeTab === 'orders' && (
         <OrderManager userRole="processor" userId={user?.id} />
+      )}
+
+      {activeTab === 'traceability' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Traceability</h2>
+            <p className="text-gray-600">Track processing activities and add details to product batches</p>
+          </div>
+
+          {incomingBatches.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+              <Factory className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No batches available for processing. Check with farmers for available batches.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {incomingBatches.slice(0, 5).map(batch => (
+                <ProductHistory
+                  key={batch.id}
+                  batchId={batch.id}
+                  showAddEvent={true}
+                />
+              ))}
+
+              {incomingBatches.length > 5 && (
+                <div className="text-center">
+                  <p className="text-gray-500">Showing 5 most recent batches available for processing</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'verification' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <KYCVerification />
+        </div>
+      )}
+
+      {activeTab === 'blockchain' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <SmartContractDashboard
+            user={user}
+            products={products}
+            onTransactionComplete={(data) => {
+              // Handle blockchain transaction completion
+              console.log('Blockchain transaction completed:', data);
+
+              // If it's a traceability creation, update the product
+              if (data.type === 'traceability_created' && data.product) {
+                const updatedProducts = products.map(p =>
+                  p.id === data.product.id
+                    ? { ...p, traceabilityData: data.traceabilityData }
+                    : p
+                );
+                setProducts(updatedProducts);
+                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(updatedProducts));
+              }
+            }}
+          />
+        </div>
       )}
 
       {activeTab === 'overview' && (
@@ -264,6 +391,13 @@ const ProcessorDashboard = () => {
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
                 <span>{user?.location || 'Your Location'}</span>
+              </div>
+              <div className="mb-4">
+                <VerificationBadge
+                  status={user?.verification?.status}
+                  level={user?.verification?.level}
+                  size="md"
+                />
               </div>
               <div className="flex items-center space-x-6">
                 <div>
@@ -402,10 +536,45 @@ const ProcessorDashboard = () => {
                     <p className="font-medium">{new Date(process.expectedCompletion).toLocaleDateString()}</p>
                   </div>
 
+                  {/* Processing Traceability QR Code */}
+                  <div className="mt-3 bg-blue-50 p-2 rounded-md flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-blue-800">Processing Traceability</p>
+                      <p className="text-xs text-blue-600">Process ID: {process.id.slice(-6)}</p>
+                    </div>
+                    <TraceabilityQRCode
+                      batchId={process.id}
+                      productName={`${process.processType} - ${process.batchId}`}
+                      size={40}
+                      showDetails={false}
+                    />
+                  </div>
+
                   {process.image && (
                     <div className="mt-3">
                       <p className="text-gray-500 text-sm mb-2">Processing Setup</p>
                       <img src={process.image} alt="Processing Setup" className="w-full h-24 object-cover rounded-md" />
+                    </div>
+                  )}
+
+                  {process.status === 'Processing' && (
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <button
+                        onClick={() => markJobCompleted(process.id)}
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Mark as Completed</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {process.status === 'Completed' && (
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-center space-x-2 text-green-600">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-sm font-medium">Completed on {new Date(process.completedDate).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getUserVerification } from '../utils/kycUtils';
 
 const AuthContext = createContext();
 
@@ -54,7 +55,14 @@ function generateUserId(role) {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(getStoredCurrentUser());
+  const [user, setUser] = useState(() => {
+    const storedUser = getStoredCurrentUser();
+    if (storedUser) {
+      const verification = getUserVerification(storedUser.id);
+      return { ...storedUser, verification };
+    }
+    return null;
+  });
 
   // Sync user state with localStorage
   useEffect(() => {
@@ -90,8 +98,13 @@ export const AuthProvider = ({ children }) => {
     const hashedPassword = await hashPassword(password);
     const found = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === hashedPassword && u.role === role);
     if (!found) throw new Error('Invalid credentials or role');
-    setUser(found);
-    return found;
+
+    // Add verification data to user
+    const verification = getUserVerification(found.id);
+    const userWithVerification = { ...found, verification };
+
+    setUser(userWithVerification);
+    return userWithVerification;
   };
 
   // Logout
@@ -109,4 +122,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext); 
+export const useAuth = () => useContext(AuthContext);

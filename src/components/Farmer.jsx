@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, ShoppingCart, ClipboardList, BarChart3 } from 'lucide-react';
+import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, ShoppingCart, ClipboardList, BarChart3, History, Shield, Link } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
@@ -7,7 +7,16 @@ import autoTable from 'jspdf-autotable';
 import Marketplace from './Marketplace';
 import OrderManager from './OrderManager';
 import InventoryManager from './InventoryManager';
+import ProductHistory from './ProductHistory';
+import KYCVerification from './KYCVerification';
+import VerificationBadge from './VerificationBadge';
+import SmartContractDashboard from './SmartContractDashboard';
+import TraceabilityQRCode from './TraceabilityQRCode';
+import NavigationTabs from './NavigationTabs';
+import NotificationSystem, { useNotifications } from './NotificationSystem';
+import LoadingButton from './LoadingSpinner';
 import { initializeInventoryItem } from '../utils/inventoryUtils';
+import { addTraceabilityEvent, TRACE_EVENT_TYPES, initializeTraceabilityForExistingBatches } from '../utils/traceabilityUtils';
 
 const BATCHES_KEY = 'batches';
 
@@ -24,11 +33,18 @@ const FarmerDashboard = () => {
   });
   const [batches, setBatches] = useState([]);
 
+  // UI/UX improvements
+  const notifications = useNotifications();
+  const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+
   // Load batches from localStorage for this farmer
   useEffect(() => {
     if (!user) return;
     const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
     setBatches(allBatches.filter(b => b.farmerId === user.id));
+
+    // Initialize traceability for existing batches
+    initializeTraceabilityForExistingBatches();
   }, [user]);
 
   // Save batches to localStorage
@@ -42,32 +58,80 @@ const FarmerDashboard = () => {
   };
 
   // Create a new batch
-  const handleCreateBatch = () => {
-    const batch = {
-      id: 'BTH-' + Date.now(),
-      farmerId: user.id,
-      variety: newBatch.variety,
-      quantity: newBatch.quantity,
-      harvestDate: newBatch.harvestDate,
-      qualityNotes: newBatch.qualityNotes,
-      image: newBatch.image,
-      status: 'Ready',
-      createdAt: new Date().toISOString()
-    };
-    const updated = [batch, ...batches];
-    saveBatches(updated);
+  const handleCreateBatch = async () => {
+    // Validation
+    if (!newBatch.variety || !newBatch.quantity || !newBatch.harvestDate) {
+      notifications.showError(
+        'Validation Error',
+        'Please fill in all required fields (variety, quantity, harvest date)'
+      );
+      return;
+    }
 
-    // Initialize inventory tracking for the new batch
-    initializeInventoryItem(
-      batch.id,
-      'batch',
-      batch.quantity,
-      user.id,
-      'farmer'
-    );
+    setIsCreatingBatch(true);
 
-    setShowCreateBatch(false);
-    setNewBatch({ variety: '', quantity: '', harvestDate: '', qualityNotes: '', image: '' });
+    try {
+      const batch = {
+        id: 'BTH-' + Date.now(),
+        farmerId: user.id,
+        variety: newBatch.variety,
+        quantity: newBatch.quantity,
+        harvestDate: newBatch.harvestDate,
+        qualityNotes: newBatch.qualityNotes,
+        image: newBatch.image,
+        status: 'Ready',
+        createdAt: new Date().toISOString()
+      };
+      const updated = [batch, ...batches];
+      saveBatches(updated);
+
+      // Initialize inventory tracking for the new batch
+      initializeInventoryItem(
+        batch.id,
+        'batch',
+        batch.quantity,
+        user.id,
+        'farmer'
+      );
+
+      // Initialize traceability tracking
+      addTraceabilityEvent(
+        batch.id,
+        TRACE_EVENT_TYPES.CREATED,
+        {
+          userName: `${user.firstName} ${user.lastName}`,
+          description: `Batch created for ${batch.variety}`,
+          location: user.location || 'Farm Location',
+          details: {
+            variety: batch.variety,
+            quantity: batch.quantity,
+            harvestDate: batch.harvestDate,
+            qualityNotes: batch.qualityNotes
+          },
+          images: batch.image ? [batch.image] : []
+        },
+        user.id,
+        'farmer'
+      );
+
+      // Success notification
+      notifications.showSuccess(
+        'Batch Created Successfully!',
+        `Batch ${batch.variety} (${batch.quantity} units) has been added to your inventory`
+      );
+
+      setShowCreateBatch(false);
+      setNewBatch({ variety: '', quantity: '', harvestDate: '', qualityNotes: '', image: '' });
+
+    } catch (error) {
+      console.error('Error creating batch:', error);
+      notifications.showError(
+        'Creation Failed',
+        'There was an error creating your batch. Please try again.'
+      );
+    } finally {
+      setIsCreatingBatch(false);
+    }
   };
 
   // Stats
@@ -138,34 +202,25 @@ const FarmerDashboard = () => {
     doc.save(filename);
   }
 
+  const navigationTabs = [
+    { id: 'overview', label: 'Farm Overview', icon: <Package className="w-4 h-4" /> },
+    { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart className="w-4 h-4" /> },
+    { id: 'orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> },
+    { id: 'inventory', label: 'Inventory', icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'traceability', label: 'Traceability', icon: <History className="w-4 h-4" /> },
+    { id: 'blockchain', label: 'Smart Contract', icon: <Link className="w-4 h-4" /> },
+    { id: 'verification', label: 'KYC/Verification', icon: <Shield className="w-4 h-4" /> }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 w-full">
       {/* Navigation Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'overview', label: 'Farm Overview', icon: <Package className="w-4 h-4" /> },
-              { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart className="w-4 h-4" /> },
-              { id: 'orders', label: 'Orders', icon: <ClipboardList className="w-4 h-4" /> },
-              { id: 'inventory', label: 'Inventory', icon: <BarChart3 className="w-4 h-4" /> }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-green-500 text-green-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+      <NavigationTabs
+        tabs={navigationTabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        colorScheme="green"
+      />
 
       {/* Tab Content */}
       {activeTab === 'marketplace' && (
@@ -180,6 +235,72 @@ const FarmerDashboard = () => {
         <InventoryManager userRole="farmer" userId={user?.id} />
       )}
 
+      {activeTab === 'traceability' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Traceability Management</h2>
+            <p className="text-gray-600">Track and manage the journey of your farm products</p>
+          </div>
+
+          {batches.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No batches created yet. Create your first batch to start tracking.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {batches.slice(0, 5).map(batch => (
+                <ProductHistory
+                  key={batch.id}
+                  batchId={batch.id}
+                  showAddEvent={true}
+                />
+              ))}
+
+              {batches.length > 5 && (
+                <div className="text-center">
+                  <p className="text-gray-500">Showing 5 most recent batches</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'blockchain' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <SmartContractDashboard
+            user={user}
+            products={batches.map(batch => ({
+              id: batch.id,
+              name: `${batch.variety} - Batch #${batch.id.slice(-6)}`,
+              type: batch.variety,
+              description: batch.qualityNotes || 'Fresh produce from farm',
+              location: user?.location || 'Farm Location',
+              origin: user?.location || 'Farm Location',
+              harvestDate: batch.harvestDate,
+              certifications: batch.certifications || [],
+              qualityMetrics: {
+                grade: 'A',
+                moisture: batch.moisture || 12,
+                purity: batch.purity || 95
+              },
+              traceabilityData: batch.traceabilityData
+            }))}
+            onTransactionComplete={(data) => {
+              console.log('Blockchain transaction completed:', data);
+              // Handle transaction completion if needed
+            }}
+          />
+        </div>
+      )}
+
+      {activeTab === 'verification' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <KYCVerification />
+        </div>
+      )}
+
       {activeTab === 'overview' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Farm Info Card */}
@@ -190,6 +311,13 @@ const FarmerDashboard = () => {
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 mr-2" />
                 <span>{user?.location || 'Your Location'}</span>
+              </div>
+              <div className="mb-4">
+                <VerificationBadge
+                  status={user?.verification?.status}
+                  level={user?.verification?.level}
+                  size="md"
+                />
               </div>
               <div className="flex items-center space-x-6">
                 <div>
@@ -283,12 +411,14 @@ const FarmerDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harvest Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality Notes</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Traceability</th>
                 </tr>
               </thead>
               <tbody>
                 {batches.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-400">No batches yet. Click "Create Batch" to add your first batch.</td>
+                    <td colSpan={8} className="text-center py-8 text-gray-400">No batches yet. Click "Create Batch" to add your first batch.</td>
                   </tr>
                 ) : (
                   batches.map(batch => (
@@ -304,6 +434,17 @@ const FarmerDashboard = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">{batch.qualityNotes}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <TraceabilityQRCode
+                          batchId={batch.id}
+                          productName={batch.variety}
+                          size={60}
+                          showDetails={true}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <ProductHistory batchId={batch.id} compact={true} showAddEvent={false} />
+                      </td>
                     </tr>
                   ))
                 )}
@@ -384,19 +525,27 @@ const FarmerDashboard = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                  onClick={handleCreateBatch}
+                <LoadingButton
+                  isLoading={isCreatingBatch}
+                  loadingText="Creating..."
                   disabled={!newBatch.variety || !newBatch.quantity || !newBatch.harvestDate}
+                  onClick={handleCreateBatch}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
                 >
-                  Create
-                </button>
+                  Create Batch
+                </LoadingButton>
               </div>
             </div>
           </div>
         )}
         </div>
       )}
+
+      {/* Notification System */}
+      <NotificationSystem
+        notifications={notifications.notifications}
+        onDismiss={notifications.removeNotification}
+      />
     </div>
   );
 };

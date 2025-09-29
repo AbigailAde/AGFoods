@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Filter, Star, MapPin, Truck, Package, CreditCard, Plus, Minus, User, Phone, Mail } from 'lucide-react';
+import { ShoppingCart, Search, Filter, Star, MapPin, Truck, Package, CreditCard, Plus, Minus, User, Phone, Mail, Shield } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import PaystackButton from './Paystack';
+import VerificationBadge from './VerificationBadge';
 import { createConsumerOrder, createDistributionOrder, createProcessingOrder } from '../utils/orderUtils';
+import { getUserVerification } from '../utils/kycUtils';
 
 const BATCHES_KEY = 'batches';
 const PRODUCTS_KEY = 'products';
@@ -54,6 +56,7 @@ const Marketplace = () => {
     const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
     allBatches.forEach(batch => {
       if (batch.status === 'Ready' && batch.farmerId !== user?.id) {
+        const farmerVerification = getUserVerification(batch.farmerId);
         allProducts.push({
           id: batch.id,
           name: `Fresh ${batch.variety}`,
@@ -67,7 +70,8 @@ const Marketplace = () => {
             name: 'Farm',
             role: 'farmer',
             location: 'Farm Location',
-            rating: 4.5
+            rating: 4.5,
+            verification: farmerVerification
           },
           type: 'batch',
           unit: 'kg'
@@ -79,6 +83,7 @@ const Marketplace = () => {
     const allProcessorProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
     allProcessorProducts.forEach(product => {
       if (product.status === 'Available' && product.processorId !== user?.id) {
+        const processorVerification = getUserVerification(product.processorId);
         allProducts.push({
           id: product.id,
           name: product.name,
@@ -92,7 +97,8 @@ const Marketplace = () => {
             name: 'Processing Facility',
             role: 'processor',
             location: 'Processing Location',
-            rating: 4.3
+            rating: 4.3,
+            verification: processorVerification
           },
           type: 'processed',
           unit: 'kg',
@@ -105,6 +111,7 @@ const Marketplace = () => {
     const allDistributorProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
     allDistributorProducts.forEach(product => {
       if (product.status === 'Available' && product.distributorId && product.distributorId !== user?.id) {
+        const distributorVerification = getUserVerification(product.distributorId);
         allProducts.push({
           id: product.id,
           name: product.name,
@@ -118,7 +125,8 @@ const Marketplace = () => {
             name: 'Distribution Center',
             role: 'distributor',
             location: 'Distribution Location',
-            rating: 4.4
+            rating: 4.4,
+            verification: distributorVerification
           },
           type: 'distribution',
           unit: product.quantity?.includes('kg') ? 'kg' : 'pack'
@@ -353,18 +361,28 @@ const Marketplace = () => {
                   </div>
 
                   {/* Seller Info */}
-                  <div className="flex items-center space-x-2 pt-2 border-t">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${
-                      product.seller.role === 'farmer' ? 'bg-green-500' :
-                      product.seller.role === 'processor' ? 'bg-purple-500' : 'bg-orange-500'
-                    }`}>
-                      {product.seller.role[0].toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{product.seller.name}</p>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="text-xs text-gray-500">{product.seller.rating}</span>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${
+                        product.seller.role === 'farmer' ? 'bg-green-500' :
+                        product.seller.role === 'processor' ? 'bg-purple-500' : 'bg-orange-500'
+                      }`}>
+                        {product.seller.role[0].toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm font-medium text-gray-900">{product.seller.name}</p>
+                          <VerificationBadge
+                            status={product.seller.verification?.status}
+                            level={product.seller.verification?.level}
+                            size="xs"
+                            showText={false}
+                          />
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                          <span className="text-xs text-gray-500">{product.seller.rating}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
