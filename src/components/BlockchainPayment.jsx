@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import SmartContractUtils from './smartContractUtils';
 
 const BlockchainPayment = ({
@@ -7,14 +9,15 @@ const BlockchainPayment = ({
   paymentMethod,
   onSuccess,
   onError,
-  walletData,
-  accountId
 }) => {
+  const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [contractUtils] = useState(new SmartContractUtils());
+  const [contractUtils] = useState(() => new SmartContractUtils(walletClient, publicClient, address));
 
   const processBlockchainPayment = async () => {
-    if (!walletData || !accountId) {
+    if (!isConnected || !walletClient) {
       onError('Please connect your wallet first');
       return;
     }
@@ -22,24 +25,24 @@ const BlockchainPayment = ({
     setIsProcessing(true);
     try {
       let result;
+      // Demo seller address (replace with actual seller address in production)
+      const sellerAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f5bE21';
 
       if (paymentMethod === 'hbar') {
-        // Direct HBAR payment - for demo, we'll use a placeholder seller ID
-        const sellerId = '0.0.4649239'; // Demo seller account ID
-
+        // Direct payment
         result = await contractUtils.processHBARPayment(
-          walletData,
-          accountId,
-          sellerId,
-          amount,
+          walletClient,
+          address,
+          sellerAddress,
+          amount * 0.0027, // Convert NGN to approximate crypto value
           orderId
         );
       } else if (paymentMethod === 'escrow') {
         // Escrow payment
         const escrowData = {
           orderId: orderId,
-          sellerId: '0.0.4649239', // Demo seller account ID
-          amount: amount,
+          sellerId: sellerAddress,
+          amount: amount * 0.0027, // Convert NGN to approximate crypto value
           productDetails: {
             description: 'AGFoods marketplace order',
             orderId: orderId
@@ -54,7 +57,7 @@ const BlockchainPayment = ({
           ]
         };
 
-        result = await contractUtils.createEscrow(walletData, accountId, escrowData);
+        result = await contractUtils.createEscrow(walletClient, address, escrowData);
       }
 
       if (result && result.success) {
@@ -118,29 +121,33 @@ const BlockchainPayment = ({
           <p>• Immutable payment proof provided</p>
         </div>
 
-        <button
-          onClick={processBlockchainPayment}
-          disabled={isProcessing || !walletData}
-          className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          {isProcessing ? (
-            <div className="flex items-center space-x-2">
-              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Processing...</span>
-            </div>
-          ) : (
-            `Pay with ${paymentMethod === 'hbar' ? 'HBAR' : 'HBAR Escrow'}`
-          )}
-        </button>
+{isConnected ? (
+          <button
+            onClick={processBlockchainPayment}
+            disabled={isProcessing}
+            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {isProcessing ? (
+              <div className="flex items-center space-x-2">
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Processing...</span>
+              </div>
+            ) : (
+              `Pay with ${paymentMethod === 'hbar' ? 'Crypto' : 'Crypto Escrow'}`
+            )}
+          </button>
+        ) : (
+          <ConnectButton />
+        )}
       </div>
 
-      {!walletData && (
+      {!isConnected && (
         <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
-            ⚠️ Please connect your Hedera wallet first to use blockchain payments.
+            ⚠️ Please connect your wallet first to use blockchain payments.
           </p>
         </div>
       )}

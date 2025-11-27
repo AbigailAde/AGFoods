@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ChevronRight, Leaf, Factory, Truck, ShoppingCart, QrCode, Shield, Users, TrendingUp } from 'lucide-react';
+import Web3Provider from './providers/Web3Provider';
 import Home from './components/Home';
 import Wallet from './components/Wallet';
 import CustomerOrderDashboard from "./components/Consumer";
@@ -104,37 +105,39 @@ function App() {
   );
 
 	return (
-    <BrowserRouter>
-      <NavBar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/processor/dashboard" element={<PrivateRoute><ProcessorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
-        <Route path="/wallet" element={<PrivateRoute><Wallet /></PrivateRoute>} />
-        <Route path="/distributor/dashboard" element={<PrivateRoute><DistributorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
-        <Route path="/farmer/dashboard" element={<PrivateRoute><FarmerDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
-        <Route path="/consumer/dashboard" element={<PrivateRoute><CustomerOrderDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
-        <Route path="/products/:id" element={<PrivateRoute><FarmerDashboard userType="farmer" /></PrivateRoute>} />
-        <Route path="/signup/farmer" element={<OnboardFarmer />} />
-        <Route path="/signup/processor" element={<OnboardProcessor />} />
-        <Route path="/signup/distributor" element={<OnboardDistributor />} />
-        <Route path="/signup/consumer" element={<OnboardConsumer />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<div className="text-center mt-10 text-red-500">404 - Page Not Found</div>} />
-      </Routes>
-      <footer className="bg-gray-900 text-white py-12 w-full">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                <Leaf className="w-5 h-5 text-white" />
+    <Web3Provider>
+      <BrowserRouter>
+        <NavBar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/processor/dashboard" element={<PrivateRoute><ProcessorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/distributor/dashboard" element={<PrivateRoute><DistributorDashboard userType={selectedUserType} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+          <Route path="/farmer/dashboard" element={<PrivateRoute><FarmerDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+          <Route path="/consumer/dashboard" element={<PrivateRoute><CustomerOrderDashboard userTypes={userTypes} onSelect={handleUserTypeSelect} /></PrivateRoute>} />
+          <Route path="/products/:id" element={<PrivateRoute><FarmerDashboard userType="farmer" /></PrivateRoute>} />
+          <Route path="/signup/farmer" element={<OnboardFarmer />} />
+          <Route path="/signup/processor" element={<OnboardProcessor />} />
+          <Route path="/signup/distributor" element={<OnboardDistributor />} />
+          <Route path="/signup/consumer" element={<OnboardConsumer />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<div className="text-center mt-10 text-red-500">404 - Page Not Found</div>} />
+        </Routes>
+        <footer className="bg-gray-900 text-white py-12 w-full">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                  <Leaf className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-lg font-semibold">AGFoods</span>
               </div>
-              <span className="text-lg font-semibold">AGFoods</span>
+              <p className="text-gray-400 text-sm">© 2025 AGFoods. Powered by blockchain technology.</p>
             </div>
-            <p className="text-gray-400 text-sm">© 2025 AGFoods. Powered by blockchain technology.</p>
           </div>
-        </div>
-      </footer>
-    </BrowserRouter>
+        </footer>
+      </BrowserRouter>
+    </Web3Provider>
 	);
 }
 export default App;

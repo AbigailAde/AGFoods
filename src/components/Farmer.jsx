@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, ShoppingCart, ClipboardList, BarChart3, History, Shield, Link } from 'lucide-react';
+import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, ShoppingCart, ClipboardList, BarChart3, History, Shield, Link, ExternalLink } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
@@ -17,6 +17,9 @@ import NotificationSystem, { useNotifications } from './NotificationSystem';
 import LoadingButton from './LoadingSpinner';
 import { initializeInventoryItem } from '../utils/inventoryUtils';
 import { addTraceabilityEvent, TRACE_EVENT_TYPES, initializeTraceabilityForExistingBatches } from '../utils/traceabilityUtils';
+import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
+import BlockchainStatus from './BlockchainStatus';
+import BlockchainRecordButton from './BlockchainRecordButton';
 
 const BATCHES_KEY = 'batches';
 
@@ -36,6 +39,15 @@ const FarmerDashboard = () => {
   // UI/UX improvements
   const notifications = useNotifications();
   const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+  const [recordToBlockchain, setRecordToBlockchain] = useState(true);
+
+  // Blockchain integration
+  const { 
+    isConnected, 
+    recordBatchOnChain, 
+    registerUser,
+    userRole 
+  } = useBlockchainIntegration();
 
   // Load batches from localStorage for this farmer
   useEffect(() => {
@@ -114,10 +126,27 @@ const FarmerDashboard = () => {
         'farmer'
       );
 
+      // Record on blockchain if enabled and connected
+      let blockchainResult = null;
+      if (recordToBlockchain && isConnected) {
+        blockchainResult = await recordBatchOnChain(batch, user);
+        if (blockchainResult.success) {
+          // Update batch with blockchain info
+          batch.blockchainTxHash = blockchainResult.txHash;
+          batch.blockchainBatchId = blockchainResult.batchId;
+          saveBatches([batch, ...batches.filter(b => b.id !== batch.id)]);
+        }
+      }
+
       // Success notification
+      const blockchainMsg = blockchainResult?.success 
+        ? ' and recorded on blockchain!' 
+        : recordToBlockchain && isConnected 
+          ? ' (blockchain recording pending)' 
+          : '';
       notifications.showSuccess(
         'Batch Created Successfully!',
-        `Batch ${batch.variety} (${batch.quantity} units) has been added to your inventory`
+        `Batch ${batch.variety} (${batch.quantity} units) has been added to your inventory${blockchainMsg}`
       );
 
       setShowCreateBatch(false);
@@ -410,7 +439,7 @@ const FarmerDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harvest Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality Notes</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blockchain</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Traceability</th>
                 </tr>
@@ -433,7 +462,17 @@ const FarmerDashboard = () => {
                           <span className="ml-1">{batch.status}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{batch.qualityNotes}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <BlockchainStatus itemId={batch.id} type="batch" compact={true} />
+                        {!batch.blockchainTxHash && isConnected && (
+                          <BlockchainRecordButton
+                            size="xs"
+                            label="Record"
+                            onRecord={() => recordBatchOnChain(batch, user)}
+                            showConnectPrompt={false}
+                          />
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <TraceabilityQRCode
                           batchId={batch.id}
@@ -517,6 +556,25 @@ const FarmerDashboard = () => {
                     </>
                   )}
                 </div>
+              </div>
+              {/* Blockchain Recording Option */}
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={recordToBlockchain}
+                    onChange={(e) => setRecordToBlockchain(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm font-medium text-blue-800">
+                    Record on Blockchain (Sepolia)
+                  </span>
+                </label>
+                <p className="mt-1 text-xs text-blue-600 ml-6">
+                  {isConnected 
+                    ? 'Your batch will be permanently recorded on the Ethereum blockchain for traceability.'
+                    : 'Connect your wallet to enable blockchain recording.'}
+                </p>
               </div>
               <div className="flex justify-end space-x-2">
                 <button

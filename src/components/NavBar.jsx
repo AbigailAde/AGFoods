@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { Leaf, Package, Truck, Factory, ShoppingCart, User, Settings, LogOut, Camera, X, Save } from 'lucide-react';
+import WalletButton from './WalletButton';
 
 const roleIcons = {
   farmer: <Package className="w-5 h-5 text-green-600" />,
@@ -100,6 +101,7 @@ export default function NavBar() {
                 <Link to="/wallet" className="text-gray-700 hover:text-green-700">Wallet</Link>
               </>
             )}
+            <WalletButton showBalance={true} chainStatus="icon" />
             {!isAuthenticated && (
               <>
                 <Link to="/login" className="text-gray-700 hover:text-green-700">Login</Link>

@@ -1,8 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAccount } from 'wagmi';
 import SmartContractIntegration from './SmartContractIntegration';
 import TraceabilityComponent from './TraceabilityComponent';
+import BlockchainOverview from './BlockchainOverview';
+import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
+import { useTotalBatches, useTotalOrders, useUserBatches } from '../hooks/useTraceabilityContract';
 
 const SmartContractDashboard = ({ user, products = [], onTransactionComplete }) => {
+  const { address, isConnected } = useAccount();
+  const { recordBatchOnChain } = useBlockchainIntegration();
+  
+  // On-chain data
+  const { data: totalBatches } = useTotalBatches();
+  const { data: totalOrders } = useTotalOrders();
+  const { data: userBatches } = useUserBatches(address);
+
   const [smartContractIntegration, setSmartContractIntegration] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');

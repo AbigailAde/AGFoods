@@ -1,0 +1,1655 @@
+{
+  "address": "0xdB3Fea2051f9a5e8ca3CF451652Fc27657ce6aB0",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "farmer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "BatchCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PlantainTraceability.BatchStatus",
+          "name": "oldStatus",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PlantainTraceability.BatchStatus",
+          "name": "newStatus",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "BatchStatusUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "DeliveryConfirmed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PlantainTraceability.DeliveryMode",
+          "name": "mode",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "DeliveryModeSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PlantainTraceability.DeliveryStatus",
+          "name": "oldStatus",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PlantainTraceability.DeliveryStatus",
+          "name": "newStatus",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "DeliveryStatusUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "distributor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "warehouseLocation",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "DistributorDataAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "farmer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "variety",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "FarmerDataAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrderCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PlantainTraceability.OrderStatus",
+          "name": "oldStatus",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PlantainTraceability.OrderStatus",
+          "name": "newStatus",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrderStatusUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "processor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "outputQuantity",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "qualityGrade",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "ProcessorDataAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "actor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "action",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "TraceEventAdded",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_batchId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "_warehouseLocation",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_storageConditions",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_quantity",
+          "type": "uint256"
+        }
+      ],
+      "name": "addDistributorData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_batchId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "_variety",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_quantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_harvestDate",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_farmLocation",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_qualityNotes",
+          "type": "string"
+        },
+        {
+          "internalType": "string[]",
+          "name": "_certifications",
+          "type": "string[]"
+        },
+        {
+          "internalType": "string",
+          "name": "_imageHash",
+          "type": "string"
+        }
+      ],
+      "name": "addFarmerData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_batchId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "_facilityLocation",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_inputQuantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_outputQuantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_qualityGrade",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_processingNotes",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_moistureContent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_purityLevel",
+          "type": "uint256"
+        }
+      ],
+      "name": "addProcessorData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "allBatches",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "batchEvents",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "actor",
+          "type": "address"
+        },
+        {
+          "internalType": "enum PlantainTraceability.UserRole",
+          "name": "role",
+          "type": "uint8"
+        },
+        {
+          "internalType": "string",
+          "name": "action",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "details",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "batchOrders",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "batches",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "farmer",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "processor",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "distributor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "createdAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum PlantainTraceability.BatchStatus",
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "farmerDataSet",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "processorDataSet",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "distributorDataSet",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "confirmDelivery",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "createBatch",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_batchId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "_seller",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_quantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        }
+      ],
+      "name": "createOrder",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "distributorData",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "receivedDate",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "warehouseLocation",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "storageConditions",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "farmerData",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "variety",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "harvestDate",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "farmLocation",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "qualityNotes",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "imageHash",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllBatches",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_batchId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getBatchDetails",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "batchId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "farmer",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "processor",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "distributor",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "enum PlantainTraceability.BatchStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bool",
+              "name": "farmerDataSet",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "processorDataSet",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "distributorDataSet",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.Batch",
+          "name": "batch",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "variety",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "quantity",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "harvestDate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "farmLocation",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "qualityNotes",
+              "type": "string"
+            },
+            {
+              "internalType": "string[]",
+              "name": "certifications",
+              "type": "string[]"
+            },
+            {
+              "internalType": "string",
+              "name": "imageHash",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.FarmerData",
+          "name": "farmer",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "processingDate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "facilityLocation",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "inputQuantity",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "outputQuantity",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "qualityGrade",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "processingNotes",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "moistureContent",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "purityLevel",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.ProcessorData",
+          "name": "processor",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "receivedDate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "warehouseLocation",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "storageConditions",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "quantity",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.DistributorData",
+          "name": "distributor",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_batchId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getBatchHistory",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "actor",
+              "type": "address"
+            },
+            {
+              "internalType": "enum PlantainTraceability.UserRole",
+              "name": "role",
+              "type": "uint8"
+            },
+            {
+              "internalType": "string",
+              "name": "action",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "details",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.TraceEvent[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_batchId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getBatchOrders",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getOrderDetails",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "orderId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "batchId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "buyer",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "quantity",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "orderDate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "enum PlantainTraceability.OrderStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum PlantainTraceability.DeliveryMode",
+                  "name": "mode",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "enum PlantainTraceability.DeliveryStatus",
+                  "name": "status",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "string",
+                  "name": "carrier",
+                  "type": "string"
+                },
+                {
+                  "internalType": "string",
+                  "name": "trackingNumber",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "estimatedDelivery",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "actualDelivery",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "string",
+                  "name": "destinationAddress",
+                  "type": "string"
+                },
+                {
+                  "internalType": "string",
+                  "name": "recipientName",
+                  "type": "string"
+                },
+                {
+                  "internalType": "string",
+                  "name": "deliveryNotes",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "lastUpdated",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct PlantainTraceability.DeliveryInfo",
+              "name": "delivery",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.Order",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "getUserBatches",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "getUserOrders",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "getUserRole",
+      "outputs": [
+        {
+          "internalType": "enum PlantainTraceability.UserRole",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "orders",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "batchId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "orderDate",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum PlantainTraceability.OrderStatus",
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "components": [
+            {
+              "internalType": "enum PlantainTraceability.DeliveryMode",
+              "name": "mode",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum PlantainTraceability.DeliveryStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "string",
+              "name": "carrier",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "trackingNumber",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "estimatedDelivery",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "actualDelivery",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "destinationAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "recipientName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "deliveryNotes",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "lastUpdated",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.DeliveryInfo",
+          "name": "delivery",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "processorData",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "processingDate",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "facilityLocation",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "inputQuantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "outputQuantity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "qualityGrade",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "processingNotes",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "moistureContent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "purityLevel",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum PlantainTraceability.UserRole",
+          "name": "_role",
+          "type": "uint8"
+        }
+      ],
+      "name": "registerUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum PlantainTraceability.DeliveryMode",
+          "name": "_mode",
+          "type": "uint8"
+        },
+        {
+          "internalType": "string",
+          "name": "_destinationAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_recipientName",
+          "type": "string"
+        }
+      ],
+      "name": "setDeliveryMode",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalBatches",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalOrders",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "trackDelivery",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum PlantainTraceability.DeliveryMode",
+              "name": "mode",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum PlantainTraceability.DeliveryStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "string",
+              "name": "carrier",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "trackingNumber",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "estimatedDelivery",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "actualDelivery",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "destinationAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "recipientName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "deliveryNotes",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "lastUpdated",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PlantainTraceability.DeliveryInfo",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum PlantainTraceability.DeliveryStatus",
+          "name": "_newStatus",
+          "type": "uint8"
+        },
+        {
+          "internalType": "string",
+          "name": "_carrier",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_trackingNumber",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_estimatedDelivery",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_notes",
+          "type": "string"
+        }
+      ],
+      "name": "updateDeliveryStatus",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum PlantainTraceability.OrderStatus",
+          "name": "_newStatus",
+          "type": "uint8"
+        }
+      ],
+      "name": "updateOrderStatus",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "userBatches",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "userOrders",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "userRoles",
+      "outputs": [
+        {
+          "internalType": "enum PlantainTraceability.UserRole",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployedAt": "2025-11-27T17:12:32.425Z",
+  "explorerUrl": "https://sepolia.etherscan.io/address/0xdB3Fea2051f9a5e8ca3CF451652Fc27657ce6aB0"
+}

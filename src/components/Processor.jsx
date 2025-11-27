@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Thermometer, Scale, ClipboardList, History, Shield, Link } from 'lucide-react';
+import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Thermometer, Scale, ClipboardList, History, Shield, Link, ExternalLink } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
@@ -14,6 +14,9 @@ import TraceabilityQRCode from './TraceabilityQRCode';
 import NavigationTabs from './NavigationTabs';
 import NotificationSystem, { useNotifications } from './NotificationSystem';
 import { addTraceabilityEvent, TRACE_EVENT_TYPES } from '../utils/traceabilityUtils';
+import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
+import BlockchainStatus from './BlockchainStatus';
+import BlockchainRecordButton from './BlockchainRecordButton';
 
 const BATCHES_KEY = 'batches';
 const PROCESSING_KEY = 'processing';
@@ -25,6 +28,10 @@ const ProcessorDashboard = () => {
 
   // UI/UX improvements
   const notifications = useNotifications();
+
+  // Blockchain integration
+  const { isConnected, recordProcessingOnChain } = useBlockchainIntegration();
+  const [recordToBlockchain, setRecordToBlockchain] = useState(true);
 
   const [showProcessBatch, setShowProcessBatch] = useState(false);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
@@ -114,7 +121,7 @@ const ProcessorDashboard = () => {
   const { getRootProps: getProcessingRootProps, getInputProps: getProcessingInputProps, isDragActive: isProcessingDragActive } = useDropzone({ onDrop: onProcessingImageDrop, accept: { 'image/*': [] } });
 
   // Start a new processing job
-  const handleStartProcessing = () => {
+  const handleStartProcessing = async () => {
     const batch = incomingBatches.find(b => b.id === newProcessing.batchId);
     const job = {
       id: 'PROC-' + Date.now(),
@@ -153,6 +160,25 @@ const ProcessorDashboard = () => {
         user.id,
         'processor'
       );
+
+      // Record on blockchain if enabled
+      if (recordToBlockchain && isConnected) {
+        const blockchainResult = await recordProcessingOnChain(
+          newProcessing.batchId,
+          {
+            inputQuantity: batch.quantity,
+            expectedYield: newProcessing.expectedYield,
+            qualityGrade: newProcessing.qualityGrade,
+            processingNotes: newProcessing.processingNotes,
+          },
+          user
+        );
+        if (blockchainResult.success) {
+          job.blockchainTxHash = blockchainResult.txHash;
+          saveProcessingJobs([job, ...processingJobs.filter(j => j.id !== job.id)]);
+          notifications.showSuccess('Blockchain Recorded', 'Processing data recorded on Sepolia');
+        }
+      }
     }
 
     setShowProcessBatch(false);

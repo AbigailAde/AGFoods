@@ -1,0 +1,41 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/home/kingtom/Desktop/AGFoods/smart-contracts/contracts/PlantainTraceability.sol": {
+      "lastModificationDate": 1764262885469,
+      "contentHash": "399411ae7c30c4b247c6a00d35fad71f",
+      "sourceName": "contracts/PlantainTraceability.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "PlantainTraceability"
+      ]
+    }
+  }
+}

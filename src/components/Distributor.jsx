@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Building, Store, BarChart3, Users, History, Shield, Link } from 'lucide-react';
+import { Plus, QrCode, MapPin, Calendar, Package, TrendingUp, Camera, Upload, Eye, CheckCircle, Clock, Truck, Factory, ShoppingCart, AlertCircle, Info, Building, Store, BarChart3, Users, History, Shield, Link, ExternalLink } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
@@ -12,6 +12,9 @@ import SmartContractDashboard from './SmartContractDashboard';
 import TraceabilityQRCode from './TraceabilityQRCode';
 import NavigationTabs from './NavigationTabs';
 import { addTraceabilityEvent, TRACE_EVENT_TYPES, getBatchTraceability } from '../utils/traceabilityUtils';
+import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
+import BlockchainStatus from './BlockchainStatus';
+import BlockchainRecordButton from './BlockchainRecordButton';
 
 const ORDERS_KEY = 'orders';
 const BATCHES_KEY = 'batches';
@@ -23,6 +26,11 @@ const DistributorDashboard = () => {
   const [showCreateOrder, setShowCreateOrder] = useState(false);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [distributorType, setDistributorType] = useState('wholesaler'); // 'wholesaler' or 'retailer'
+  
+  // Blockchain integration
+  const { isConnected, recordDistributionOnChain, updateDeliveryOnChain } = useBlockchainIntegration();
+  const [recordToBlockchain, setRecordToBlockchain] = useState(true);
+
   const [newOrder, setNewOrder] = useState({
     batchId: '',
     orderType: '',
@@ -107,7 +115,7 @@ const DistributorDashboard = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] } });
 
   // Create a new order
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     const batch = availableBatches.find(b => b.id === newOrder.batchId);
     const order = {
       id: 'ORD-' + Date.now(),
@@ -147,6 +155,23 @@ const DistributorDashboard = () => {
         user.id,
         'distributor'
       );
+
+      // Record on blockchain if enabled
+      if (recordToBlockchain && isConnected) {
+        const blockchainResult = await recordDistributionOnChain(
+          newOrder.batchId,
+          {
+            quantity: newOrder.quantity,
+            destination: newOrder.destination,
+            storageConditions: 'Standard warehouse storage',
+          },
+          user
+        );
+        if (blockchainResult.success) {
+          order.blockchainTxHash = blockchainResult.txHash;
+          saveOrders([order, ...orders.filter(o => o.id !== order.id)]);
+        }
+      }
     }
 
     setShowCreateOrder(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, MapPin, Calendar, Shield, Star, Truck, Factory, Filter, Search, Plus, Minus, CreditCard, User, Package, History, MessageCircle, Link, Phone } from 'lucide-react';
+import { ShoppingCart, MapPin, Calendar, Shield, Star, Truck, Factory, Filter, Search, Plus, Minus, CreditCard, User, Package, History, MessageCircle, Link, Phone, ExternalLink } from 'lucide-react';
 import PaystackButton from './Paystack';
 import { useAuth } from './AuthContext';
 import jsPDF from 'jspdf';
@@ -15,6 +15,8 @@ import NavigationTabs from './NavigationTabs';
 import NotificationSystem, { useNotifications } from './NotificationSystem';
 import ConfirmationDialog, { useConfirmation } from './ConfirmationDialog';
 import { addTraceabilityEvent, TRACE_EVENT_TYPES } from '../utils/traceabilityUtils';
+import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
+import BlockchainStatus from './BlockchainStatus';
 
 const BATCHES_KEY = 'batches';
 const ORDERS_KEY = 'orders';
@@ -28,6 +30,9 @@ const CustomerOrderDashboard = () => {
   const [cart, setCart] = useState([]);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [showCreateRequest, setShowCreateRequest] = useState(false);
+
+  // Blockchain integration
+  const { isConnected, recordOrderOnChain, confirmDeliveryOnChain } = useBlockchainIntegration();
   const [selectedDistributor, setSelectedDistributor] = useState(null);
   const [orderForm, setOrderForm] = useState({
     customerName: '',
