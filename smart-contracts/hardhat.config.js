@@ -1,6 +1,5 @@
 require('dotenv').config();
 require('@nomicfoundation/hardhat-ethers');
-require('@nomicfoundation/hardhat-verify');
 
 module.exports = {
   solidity: '0.8.19',
@@ -11,9 +10,5 @@ module.exports = {
       url: process.env.SEPOLIA_RPC_URL || process.env.ALCHEMY_SEPOLIA_RPC || `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : []
     }
-  }
-  ,
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY || ''
   }
 };
