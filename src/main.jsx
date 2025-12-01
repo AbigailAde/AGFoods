@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles/App.css";
+import './index.css'  // <-- Make sure this line exists!
 import { AuthProvider } from './components/AuthContext';
 
 const container = document.getElementById('root');

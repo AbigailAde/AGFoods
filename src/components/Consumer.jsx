@@ -244,7 +244,7 @@ const CustomerOrderDashboard = () => {
   const filteredProducts = allProducts.filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -412,9 +412,8 @@ const CustomerOrderDashboard = () => {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-3 h-3 ${
-                      star <= product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                    }`}
+                    className={`w-3 h-3 ${star <= product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                      }`}
                   />
                 ))}
                 <span className="text-xs text-gray-600 ml-1">{product.rating}</span>
@@ -465,11 +464,10 @@ const CustomerOrderDashboard = () => {
 
             <button
               onClick={() => addToCart(product)}
-              className={`w-full py-2 px-4 rounded-md transition-colors font-medium text-sm ${
-                isInCart
-                  ? 'bg-green-100 text-green-700 border border-green-300 cursor-default'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
+              className={`w-full py-2 px-4 rounded-md transition-colors font-medium text-sm ${isInCart
+                ? 'bg-green-100 text-green-700 border border-green-300 cursor-default'
+                : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
               disabled={isInCart}
             >
               {isInCart ? 'Added to Cart' : 'Add to Cart'}
@@ -786,11 +784,10 @@ const CustomerOrderDashboard = () => {
                           <p className="text-sm text-gray-500">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
                         </div>
                         <div className="text-right">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
                             order.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
                             {order.status}
                           </span>
                           {order.deliveredDate && (
@@ -917,20 +914,18 @@ const CustomerOrderDashboard = () => {
                           <td className="px-6 py-4 whitespace-nowrap">{request.quantity}</td>
                           <td className="px-6 py-4 whitespace-nowrap">₦{request.maxPrice}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              request.urgency === 'urgent' ? 'bg-red-100 text-red-800' :
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${request.urgency === 'urgent' ? 'bg-red-100 text-red-800' :
                               request.urgency === 'high' ? 'bg-orange-100 text-orange-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
+                                'bg-green-100 text-green-800'
+                              }`}>
                               {request.urgency}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              request.status === 'Open' ? 'bg-blue-100 text-blue-800' :
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${request.status === 'Open' ? 'bg-blue-100 text-blue-800' :
                               request.status === 'Matched' ? 'bg-green-100 text-green-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
+                                'bg-gray-100 text-gray-800'
+                              }`}>
                               {request.status}
                             </span>
                           </td>
@@ -950,7 +945,7 @@ const CustomerOrderDashboard = () => {
 
       {/* Order Form Modal */}
       {showOrderForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowOrderForm(false)}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]" onClick={() => setShowOrderForm(false)}>
           <div className="bg-white h-[80vh] overflow-y-auto rounded-xl max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">Complete Your Order</h2>
@@ -979,7 +974,7 @@ const CustomerOrderDashboard = () => {
                       type="text"
                       required
                       value={orderForm.customerName}
-                      onChange={(e) => setOrderForm({...orderForm, customerName: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, customerName: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -989,7 +984,7 @@ const CustomerOrderDashboard = () => {
                       type="email"
                       required
                       value={orderForm.email}
-                      onChange={(e) => setOrderForm({...orderForm, email: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -999,7 +994,7 @@ const CustomerOrderDashboard = () => {
                       type="tel"
                       required
                       value={orderForm.phone}
-                      onChange={(e) => setOrderForm({...orderForm, phone: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -1009,7 +1004,7 @@ const CustomerOrderDashboard = () => {
                       type="date"
                       required
                       value={orderForm.deliveryDate}
-                      onChange={(e) => setOrderForm({...orderForm, deliveryDate: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, deliveryDate: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -1029,7 +1024,7 @@ const CustomerOrderDashboard = () => {
                       required
                       rows={3}
                       value={orderForm.address}
-                      onChange={(e) => setOrderForm({...orderForm, address: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, address: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -1040,7 +1035,7 @@ const CustomerOrderDashboard = () => {
                         type="text"
                         required
                         value={orderForm.city}
-                        onChange={(e) => setOrderForm({...orderForm, city: e.target.value})}
+                        onChange={(e) => setOrderForm({ ...orderForm, city: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
@@ -1050,7 +1045,7 @@ const CustomerOrderDashboard = () => {
                         type="text"
                         required
                         value={orderForm.state}
-                        onChange={(e) => setOrderForm({...orderForm, state: e.target.value})}
+                        onChange={(e) => setOrderForm({ ...orderForm, state: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
@@ -1079,7 +1074,7 @@ const CustomerOrderDashboard = () => {
                         name="paymentMethod"
                         value={method.id}
                         checked={orderForm.paymentMethod === method.id}
-                        onChange={(e) => setOrderForm({...orderForm, paymentMethod: e.target.value})}
+                        onChange={(e) => setOrderForm({ ...orderForm, paymentMethod: e.target.value })}
                         className="text-green-600 focus:ring-green-500"
                       />
                       <label htmlFor={method.id} className="flex-1 cursor-pointer">
@@ -1100,7 +1095,7 @@ const CustomerOrderDashboard = () => {
                 <textarea
                   rows={3}
                   value={orderForm.specialInstructions}
-                  onChange={(e) => setOrderForm({...orderForm, specialInstructions: e.target.value})}
+                  onChange={(e) => setOrderForm({ ...orderForm, specialInstructions: e.target.value })}
                   placeholder="Any special delivery instructions or notes..."
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                 />
@@ -1227,7 +1222,7 @@ const CustomerOrderDashboard = () => {
 
       {/* Create Request Modal */}
       {showCreateRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Create Product Request</h2>
 
@@ -1239,7 +1234,7 @@ const CustomerOrderDashboard = () => {
                 <input
                   type="text"
                   value={newRequest.productName}
-                  onChange={(e) => setNewRequest({...newRequest, productName: e.target.value})}
+                  onChange={(e) => setNewRequest({ ...newRequest, productName: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="What product are you looking for?"
                 />
@@ -1251,7 +1246,7 @@ const CustomerOrderDashboard = () => {
                 </label>
                 <select
                   value={newRequest.category}
-                  onChange={(e) => setNewRequest({...newRequest, category: e.target.value})}
+                  onChange={(e) => setNewRequest({ ...newRequest, category: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="">Select category</option>
@@ -1273,7 +1268,7 @@ const CustomerOrderDashboard = () => {
                 <input
                   type="text"
                   value={newRequest.quantity}
-                  onChange={(e) => setNewRequest({...newRequest, quantity: e.target.value})}
+                  onChange={(e) => setNewRequest({ ...newRequest, quantity: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="e.g., 100kg, 50 packs"
                 />
@@ -1286,7 +1281,7 @@ const CustomerOrderDashboard = () => {
                 <input
                   type="number"
                   value={newRequest.maxPrice}
-                  onChange={(e) => setNewRequest({...newRequest, maxPrice: e.target.value})}
+                  onChange={(e) => setNewRequest({ ...newRequest, maxPrice: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="Your maximum budget"
                 />
@@ -1298,7 +1293,7 @@ const CustomerOrderDashboard = () => {
                 </label>
                 <select
                   value={newRequest.urgency}
-                  onChange={(e) => setNewRequest({...newRequest, urgency: e.target.value})}
+                  onChange={(e) => setNewRequest({ ...newRequest, urgency: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="normal">Normal</option>
@@ -1313,7 +1308,7 @@ const CustomerOrderDashboard = () => {
                 </label>
                 <textarea
                   value={newRequest.description}
-                  onChange={(e) => setNewRequest({...newRequest, description: e.target.value})}
+                  onChange={(e) => setNewRequest({ ...newRequest, description: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   rows="3"
                   placeholder="Specify quality requirements, delivery preferences, certifications needed..."

@@ -26,7 +26,7 @@ const DistributorDashboard = () => {
   const [showCreateOrder, setShowCreateOrder] = useState(false);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [distributorType, setDistributorType] = useState('wholesaler'); // 'wholesaler' or 'retailer'
-  
+
   // Blockchain integration
   const { isConnected, recordDistributionOnChain, updateDeliveryOnChain } = useBlockchainIntegration();
   const [recordToBlockchain, setRecordToBlockchain] = useState(true);
@@ -265,7 +265,7 @@ const DistributorDashboard = () => {
 
   // UI helpers
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Ready for Distribution': return 'bg-green-100 text-green-800';
       case 'In Transit': return 'bg-blue-100 text-blue-800';
       case 'Preparing': return 'bg-yellow-100 text-yellow-800';
@@ -275,7 +275,7 @@ const DistributorDashboard = () => {
     }
   };
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Ready for Distribution': return <Package className="w-4 h-4" />;
       case 'In Transit': return <Truck className="w-4 h-4" />;
       case 'Preparing': return <Clock className="w-4 h-4" />;
@@ -348,22 +348,20 @@ const DistributorDashboard = () => {
               <div className="flex bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setDistributorType('wholesaler')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                    distributorType === 'wholesaler'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${distributorType === 'wholesaler'
+                    ? 'bg-white text-orange-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                    }`}
                 >
                   <Building className="w-4 h-4 inline mr-1" />
                   Wholesaler
                 </button>
                 <button
                   onClick={() => setDistributorType('retailer')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                    distributorType === 'retailer'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${distributorType === 'retailer'
+                    ? 'bg-white text-orange-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                    }`}
                 >
                   <Store className="w-4 h-4 inline mr-1" />
                   Retailer
@@ -398,459 +396,460 @@ const DistributorDashboard = () => {
 
       {/* Main Content */}
       {activeTab === 'overview' && (
-      <div>
-        {/* Company Info Card */}
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {user?.companyName || 'Your Company Name'}
-              </h2>
-              <div className="flex items-center text-gray-600 mb-4">
-                <MapPin className="w-4 h-4 mr-2" />
-                <span>{user?.location || 'Your Location'}</span>
-              </div>
-              <div className="mb-4">
-                <VerificationBadge
-                  status={user?.verification?.status}
-                  level={user?.verification?.level}
-                  size="md"
-                />
-              </div>
-              <div className="flex items-center space-x-6">
-                <div>
-                  <p className="text-sm text-gray-500">Distributor ID</p>
-                  <p className="font-semibold text-gray-900">
-                    {user?.id || 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Products</p>
-                  <p className="font-semibold text-orange-600">
-                    {products.length}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">
-                    {distributorType === 'wholesaler' ? 'Clients Served' : 'Customers Served'}
-                  </p>
-                  <p className="font-semibold text-gray-900">
-                    0
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowCreateProduct(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Product</span>
-              </button>
-              <button
-                onClick={() => setShowCreateOrder(true)}
-                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Order</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center justify-between">
+        <div>
+          {/* Company Info Card */}
+          <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
-              </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <ShoppingCart className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Active Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{activeOrders}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">This Month</p>
-                <p className="text-2xl font-bold text-gray-900">{thisMonth}</p>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Orders Table */}
-        <div className="bg-white rounded-xl shadow-sm border">
-          <div className="px-6 py-4 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">Your Orders</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Special Instructions</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="text-center py-8 text-gray-400">No orders yet. Click "Create Order" to add your first order.</td>
-                  </tr>
-                ) : (
-                  orders.map(order => (
-                    <tr key={order.id}>
-                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{order.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{order.batchId}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{order.productType}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{order.orderType}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{order.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{order.destination}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{order.deliveryDate}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getStatusColor(order.status)}`}>
-                          {getStatusIcon(order.status)}
-                          <span className="ml-1">{order.status}</span>
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{order.specialInstructions}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex space-x-2">
-                          {order.status === 'Preparing' && (
-                            <button
-                              onClick={() => markOrderShipped(order.id)}
-                              className="text-blue-600 hover:text-blue-800 text-sm"
-                              title="Mark as Shipped"
-                            >
-                              <Truck className="w-4 h-4" />
-                            </button>
-                          )}
-                          {order.status === 'In Transit' && (
-                            <button
-                              onClick={() => markOrderDelivered(order.id)}
-                              className="text-green-600 hover:text-green-800 text-sm"
-                              title="Mark as Delivered"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                          )}
-                          {order.status === 'Delivered' && (
-                            <span className="text-green-600 text-sm">
-                              <CheckCircle className="w-4 h-4" />
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Products Section */}
-        <div className="bg-white rounded-xl shadow-sm border mb-8">
-          <div className="px-6 py-4 border-b flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Your Products</h3>
-            <div className="flex justify-end space-x-2">
-              <button
-                className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
-                onClick={() => exportToCSV(products, 'products.csv')}
-                disabled={products.length === 0}
-              >
-                Export CSV
-              </button>
-              <button
-                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
-                onClick={() => exportToPDF(products, 'products.pdf')}
-                disabled={products.length === 0}
-              >
-                Export PDF
-              </button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (₦)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-8 text-gray-400">No products yet. Click "Create Product" to add your first product.</td>
-                  </tr>
-                ) : (
-                  products.map(product => (
-                    <tr key={product.id}>
-                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{product.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">{product.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{product.category}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{product.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">₦{product.price}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                          <Package className="w-3 h-3 mr-1" />
-                          {product.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <TraceabilityQRCode
-                          batchId={product.id}
-                          productName={product.name}
-                          size={60}
-                          showDetails={true}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Create Product Modal */}
-        {showCreateProduct && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Product</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newProduct.name}
-                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Enter product name"
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {user?.companyName || 'Your Company Name'}
+                </h2>
+                <div className="flex items-center text-gray-600 mb-4">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <span>{user?.location || 'Your Location'}</span>
+                </div>
+                <div className="mb-4">
+                  <VerificationBadge
+                    status={user?.verification?.status}
+                    level={user?.verification?.level}
+                    size="md"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={newProduct.category}
-                    onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  >
-                    <option value="">Select category</option>
-                    <option value="Plantain Flour">Plantain Flour</option>
-                    <option value="Plantain Chips">Plantain Chips</option>
-                    <option value="Dried Plantain">Dried Plantain</option>
-                    <option value="Plantain Puree">Plantain Puree</option>
-                    <option value="Raw Plantain">Raw Plantain</option>
-                    <option value="Processed Foods">Processed Foods</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity Available
-                  </label>
-                  <input
-                    type="text"
-                    value={newProduct.quantity}
-                    onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="e.g., 500kg, 200 packs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price per Unit (₦)
-                  </label>
-                  <input
-                    type="number"
-                    value={newProduct.price}
-                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Enter price"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    rows="3"
-                    placeholder="Product description, specifications, availability..."
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Upload Product Photo</label>
-                  <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer ${isDragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-300'}`}>
-                    <input {...getInputProps()} />
-                    {newProduct.image ? (
-                      <img src={newProduct.image} alt="Product" className="mx-auto h-32 object-contain mb-2" />
-                    ) : (
-                      <>
-                        <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-2">Drag & drop or click to select a photo</p>
-                      </>
-                    )}
+                <div className="flex items-center space-x-6">
+                  <div>
+                    <p className="text-sm text-gray-500">Distributor ID</p>
+                    <p className="font-semibold text-gray-900">
+                      {user?.id || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total Products</p>
+                    <p className="font-semibold text-orange-600">
+                      {products.length}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      {distributorType === 'wholesaler' ? 'Clients Served' : 'Customers Served'}
+                    </p>
+                    <p className="font-semibold text-gray-900">
+                      0
+                    </p>
                   </div>
                 </div>
               </div>
-
-              <div className="flex space-x-3 mt-6">
+              <div className="flex space-x-3">
                 <button
-                  onClick={() => setShowCreateProduct(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowCreateProduct(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                 >
-                  Cancel
+                  <Plus className="w-4 h-4" />
+                  <span>Create Product</span>
                 </button>
                 <button
-                  onClick={handleCreateProduct}
-                  disabled={!newProduct.name || !newProduct.category || !newProduct.quantity || !newProduct.price}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowCreateOrder(true)}
+                  className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
                 >
-                  Create Product
+                  <Plus className="w-4 h-4" />
+                  <span>Create Order</span>
                 </button>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Create Order Modal */}
-        {showCreateOrder && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">Create New Order</h2>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-1">Batch</label>
-                <select
-                  className="w-full border rounded px-3 py-2"
-                  value={newOrder.batchId}
-                  onChange={e => setNewOrder({ ...newOrder, batchId: e.target.value })}
-                  required
-                >
-                  <option value="">Select batch</option>
-                  {availableBatches.map(batch => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.id} - {batch.variety || batch.productType} ({batch.quantity})
-                    </option>
-                  ))}
-                </select>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <ShoppingCart className="w-6 h-6 text-orange-600" />
+                </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-1">Order Type</label>
-                <select
-                  className="w-full border rounded px-3 py-2"
-                  value={newOrder.orderType}
-                  onChange={e => setNewOrder({ ...newOrder, orderType: e.target.value })}
-                  required
-                >
-                  <option value="">Select order type</option>
-                  {Object.keys(orderTypeInfo[distributorType]).map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Active Orders</p>
+                  <p className="text-2xl font-bold text-gray-900">{activeOrders}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-blue-600" />
+                </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-1">Quantity</label>
-                <input
-                  type="text"
-                  className="w-full border rounded px-3 py-2"
-                  value={newOrder.quantity}
-                  onChange={e => setNewOrder({ ...newOrder, quantity: e.target.value })}
-                  required
-                />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">This Month</p>
+                  <p className="text-2xl font-bold text-gray-900">{thisMonth}</p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-yellow-600" />
+                </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-1">Destination</label>
-                <input
-                  type="text"
-                  className="w-full border rounded px-3 py-2"
-                  value={newOrder.destination}
-                  onChange={e => setNewOrder({ ...newOrder, destination: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-1">Delivery Date</label>
-                <input
-                  type="date"
-                  className="w-full border rounded px-3 py-2"
-                  value={newOrder.deliveryDate}
-                  onChange={e => setNewOrder({ ...newOrder, deliveryDate: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-1">Special Instructions</label>
-                <input
-                  type="text"
-                  className="w-full border rounded px-3 py-2"
-                  value={newOrder.specialInstructions}
-                  onChange={e => setNewOrder({ ...newOrder, specialInstructions: e.target.value })}
-                />
-              </div>
+            </div>
+          </div>
+
+          {/* Orders Table */}
+          <div className="bg-white rounded-xl shadow-sm border">
+            <div className="px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Your Orders</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Special Instructions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="text-center py-8 text-gray-400">No orders yet. Click "Create Order" to add your first order.</td>
+                    </tr>
+                  ) : (
+                    orders.map(order => (
+                      <tr key={order.id}>
+                        <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{order.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.batchId}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.productType}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.orderType}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.quantity}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.destination}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.deliveryDate}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getStatusColor(order.status)}`}>
+                            {getStatusIcon(order.status)}
+                            <span className="ml-1">{order.status}</span>
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.specialInstructions}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            {order.status === 'Preparing' && (
+                              <button
+                                onClick={() => markOrderShipped(order.id)}
+                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                title="Mark as Shipped"
+                              >
+                                <Truck className="w-4 h-4" />
+                              </button>
+                            )}
+                            {order.status === 'In Transit' && (
+                              <button
+                                onClick={() => markOrderDelivered(order.id)}
+                                className="text-green-600 hover:text-green-800 text-sm"
+                                title="Mark as Delivered"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                            {order.status === 'Delivered' && (
+                              <span className="text-green-600 text-sm">
+                                <CheckCircle className="w-4 h-4" />
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Products Section */}
+          <div className="bg-white rounded-xl shadow-sm border mb-8">
+            <div className="px-6 py-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Your Products</h3>
               <div className="flex justify-end space-x-2">
                 <button
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                  onClick={() => setShowCreateOrder(false)}
+                  className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
+                  onClick={() => exportToCSV(products, 'products.csv')}
+                  disabled={products.length === 0}
                 >
-                  Cancel
+                  Export CSV
                 </button>
                 <button
-                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
-                  onClick={handleCreateOrder}
-                  disabled={!newOrder.batchId || !newOrder.orderType || !newOrder.quantity || !newOrder.destination || !newOrder.deliveryDate}
+                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                  onClick={() => exportToPDF(products, 'products.pdf')}
+                  disabled={products.length === 0}
                 >
-                  Create
+                  Export PDF
                 </button>
               </div>
             </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (₦)</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-gray-400">No products yet. Click "Create Product" to add your first product.</td>
+                    </tr>
+                  ) : (
+                    products.map(product => (
+                      <tr key={product.id}>
+                        <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{product.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">{product.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{product.category}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{product.quantity}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">₦{product.price}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                            <Package className="w-3 h-3 mr-1" />
+                            {product.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <TraceabilityQRCode
+                            batchId={product.id}
+                            productName={product.name}
+                            size={60}
+                            showDetails={true}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+
+        </div>
+      )}
+
+      {/* Create Product Modal */}
+      {showCreateProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Product</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Enter product name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  value={newProduct.category}
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="">Select category</option>
+                  <option value="Plantain Flour">Plantain Flour</option>
+                  <option value="Plantain Chips">Plantain Chips</option>
+                  <option value="Dried Plantain">Dried Plantain</option>
+                  <option value="Plantain Puree">Plantain Puree</option>
+                  <option value="Raw Plantain">Raw Plantain</option>
+                  <option value="Processed Foods">Processed Foods</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quantity Available
+                </label>
+                <input
+                  type="text"
+                  value={newProduct.quantity}
+                  onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="e.g., 500kg, 200 packs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price per Unit (₦)
+                </label>
+                <input
+                  type="number"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Enter price"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  rows="3"
+                  placeholder="Product description, specifications, availability..."
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Product Photo</label>
+                <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer ${isDragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-300'}`}>
+                  <input {...getInputProps()} />
+                  {newProduct.image ? (
+                    <img src={newProduct.image} alt="Product" className="mx-auto h-32 object-contain mb-2" />
+                  ) : (
+                    <>
+                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">Drag & drop or click to select a photo</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => setShowCreateProduct(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProduct}
+                disabled={!newProduct.name || !newProduct.category || !newProduct.quantity || !newProduct.price}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Order Modal */}
+      {showCreateOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Create New Order</h2>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-1">Batch</label>
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={newOrder.batchId}
+                onChange={e => setNewOrder({ ...newOrder, batchId: e.target.value })}
+                required
+              >
+                <option value="">Select batch</option>
+                {availableBatches.map(batch => (
+                  <option key={batch.id} value={batch.id}>
+                    {batch.id} - {batch.variety || batch.productType} ({batch.quantity})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-1">Order Type</label>
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={newOrder.orderType}
+                onChange={e => setNewOrder({ ...newOrder, orderType: e.target.value })}
+                required
+              >
+                <option value="">Select order type</option>
+                {Object.keys(orderTypeInfo[distributorType]).map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-1">Quantity</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={newOrder.quantity}
+                onChange={e => setNewOrder({ ...newOrder, quantity: e.target.value })}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-1">Destination</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={newOrder.destination}
+                onChange={e => setNewOrder({ ...newOrder, destination: e.target.value })}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-1">Delivery Date</label>
+              <input
+                type="date"
+                className="w-full border rounded px-3 py-2"
+                value={newOrder.deliveryDate}
+                onChange={e => setNewOrder({ ...newOrder, deliveryDate: e.target.value })}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-1">Special Instructions</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={newOrder.specialInstructions}
+                onChange={e => setNewOrder({ ...newOrder, specialInstructions: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                onClick={() => setShowCreateOrder(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+                onClick={handleCreateOrder}
+                disabled={!newOrder.batchId || !newOrder.orderType || !newOrder.quantity || !newOrder.destination || !newOrder.deliveryDate}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Marketplace Tab */}

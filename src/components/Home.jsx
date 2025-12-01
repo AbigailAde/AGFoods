@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { ChevronRight, Leaf, Factory, Truck, ShoppingCart, QrCode, Shield, Users, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronRight, Leaf, Factory, Truck, ShoppingCart, QrCode, Shield, Users, TrendingUp, HelpCircle, Wallet } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 function Home() {
-    const [selectedUserType, setSelectedUserType] = useState(null);
-    const { isAuthenticated, user } = useAuth();
+  const [selectedUserType, setSelectedUserType] = useState(null);
+  const { isAuthenticated, user } = useAuth();
 
   const userTypes = [
     {
@@ -65,8 +66,8 @@ function Home() {
     }
   ];
 
-	return (
-	<div className="min-h-screen bg-gray-50 w-full">      
+  return (
+    <div className="min-h-screen bg-gray-50 w-full">
 
       {/* Hero Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8">
@@ -80,15 +81,15 @@ function Home() {
           <p className="text-xl text-gray-600 mb-16 max-w-3xl mx-auto">
             Ensuring quality, authenticity, and transparency in the plantain flour supply chain through blockchain technology.
           </p>
-          
+
           {/* Simplified User Type Selection */}
           <div className="max-w-2xl mx-auto">
             <h3 className="text-2xl font-semibold text-gray-900 mb-8">Select Your Role</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {userTypes.map((type) => (
-                <a
+                <Link
                   key={type.id}
-                  href={isAuthenticated ? `/${user.role}/dashboard` : `/signup/${type.id}`}
+                  to={isAuthenticated ? `/${user.role}/dashboard` : `/signup/${type.id}`}
                   className="group block bg-white rounded-xl p-6 text-center border border-gray-200 hover:border-green-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <div className="mb-3 flex items-center justify-center w-16 h-16 rounded-full mx-auto">
@@ -97,7 +98,7 @@ function Home() {
                   <h4 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
                     {type.title}
                   </h4>
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -113,7 +114,7 @@ function Home() {
               Blockchain-powered transparency for your plantain flour supply chain
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="text-center p-6">
@@ -128,9 +129,41 @@ function Home() {
         </div>
       </section>
 
+      {/* Help Section */}
+      <section className="py-12 bg-green-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-green-100">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <HelpCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Need Help Connecting?</h3>
+            <p className="text-gray-600 mb-6">
+              To use AGFoods, you need a Web3 wallet like MetaMask or Coinbase Wallet.
+              This allows you to securely interact with the blockchain.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
+              <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <Wallet className="w-5 h-5 text-green-600 mt-1" />
+                <div>
+                  <h4 className="font-semibold text-gray-900">1. Get a Wallet</h4>
+                  <p className="text-sm text-gray-600">Install MetaMask or Coinbase Wallet extension for your browser.</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <Shield className="w-5 h-5 text-green-600 mt-1" />
+                <div>
+                  <h4 className="font-semibold text-gray-900">2. Connect</h4>
+                  <p className="text-sm text-gray-600">Click the "Connect Wallet" button in the top right corner.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works - Removed to reduce busy-ness */}
     </div>
-);
+  );
 }
 export default Home;
 

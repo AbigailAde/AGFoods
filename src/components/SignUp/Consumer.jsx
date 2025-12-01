@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { ChevronRight, QrCode, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
 function OnboardConsumer() {
   const { signUp } = useAuth();
-  const [currentStep, setCurrentStep] = useState('userType'); // 'userType', 'form', 'success'
   const [selectedUserType, setSelectedUserType] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -126,13 +126,22 @@ function OnboardConsumer() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentStep !== 'userType' && (
-            <button
-                onClick={() => currentStep === 'form' ? setCurrentStep('userType') : resetForm()}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
-            </button>
+          <button
+            onClick={() => currentStep === 'form' ? setCurrentStep('userType') : resetForm()}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </button>
+        )}
+        {currentStep === 'userType' && (
+          <Link
+            to="/"
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-4 inline-block"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
         )}
         {/* User Type Selection */}
         {currentStep === 'userType' && (
@@ -142,17 +151,17 @@ function OnboardConsumer() {
               Select your role to get started with blockchain-powered supply chain tracking
             </p> */}
             <p className="text-gray-600 text-sm">
-                {userTypes[0].description}
+              {userTypes[0].description}
             </p>
             <button
-                type="button"
-                onClick={() => {
-                    setSelectedUserType(userTypes[0].id);
-                    setCurrentStep('form');
-                  }}
-                className="mt-3 flex items-center text-green-600 group-hover:text-green-700">
-                <span className="text-sm font-medium">Get Started</span>
-                <ChevronRight className="w-4 h-4 ml-1" />
+              type="button"
+              onClick={() => {
+                setSelectedUserType(userTypes[0].id);
+                setCurrentStep('form');
+              }}
+              className="mt-3 flex items-center text-green-600 group-hover:text-green-700">
+              <span className="text-sm font-medium">Get Started</span>
+              <ChevronRight className="w-4 h-4 ml-1" />
             </button>
           </div>
         )}
@@ -187,9 +196,8 @@ function OnboardConsumer() {
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                        errors.firstName ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.firstName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                   </div>
@@ -203,9 +211,8 @@ function OnboardConsumer() {
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                        errors.lastName ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.lastName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
                   </div>
@@ -220,9 +227,8 @@ function OnboardConsumer() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.email ? 'border-red-500' : 'border-gray-300'
+                      }`}
                   />
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                 </div>
@@ -236,9 +242,8 @@ function OnboardConsumer() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.phone ? 'border-red-500' : 'border-gray-300'
+                      }`}
                   />
                   {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                 </div>
@@ -253,9 +258,8 @@ function OnboardConsumer() {
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                        errors.companyName ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.companyName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {errors.companyName && <p className="text-red-500 text-sm mt-1">{errors.companyName}</p>}
                   </div>
@@ -271,9 +275,8 @@ function OnboardConsumer() {
                     value={formData.location}
                     onChange={handleInputChange}
                     placeholder="City, State/Region"
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      errors.location ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.location ? 'border-red-500' : 'border-gray-300'
+                      }`}
                   />
                   {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
                 </div>
@@ -289,9 +292,8 @@ function OnboardConsumer() {
                       onChange={handleInputChange}
                       rows={3}
                       placeholder="List any relevant certifications (e.g., Organic, Fair Trade, ISO)"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none ${
-                        errors.certifications ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none ${errors.certifications ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {errors.certifications && <p className="text-red-500 text-sm mt-1">{errors.certifications}</p>}
                   </div>
@@ -307,9 +309,8 @@ function OnboardConsumer() {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                        errors.password ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.password ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
                   </div>
@@ -323,9 +324,8 @@ function OnboardConsumer() {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                        errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
                   </div>

@@ -98,7 +98,7 @@ export default function NavBar() {
             {isAuthenticated && (
               <>
                 <Link to={`/${user.role}/dashboard`} className="text-gray-700 hover:text-green-700 capitalize">Dashboard</Link>
-                <Link to="/wallet" className="text-gray-700 hover:text-green-700">Wallet</Link>
+                <Link to="/wallet" className="text-gray-700 hover:text-green-700 hidden md:block">Wallet</Link>
               </>
             )}
             <WalletButton showBalance={true} chainStatus="icon" />
@@ -125,9 +125,9 @@ export default function NavBar() {
                     className="relative w-8 h-8 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
                   >
                     {profileImage ? (
-                      <img 
-                        src={profileImage} 
-                        alt="Profile" 
+                      <img
+                        src={profileImage}
+                        alt="Profile"
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
@@ -145,9 +145,9 @@ export default function NavBar() {
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                           {profileImage ? (
-                            <img 
-                              src={profileImage} 
-                              alt="Profile" 
+                            <img
+                              src={profileImage}
+                              alt="Profile"
                               className="w-12 h-12 rounded-full object-cover"
                             />
                           ) : (
@@ -163,7 +163,7 @@ export default function NavBar() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="py-1">
                       <button
                         onClick={() => {
@@ -185,7 +185,7 @@ export default function NavBar() {
                         Settings
                       </button>
                     </div>
-                    
+
                     <div className="border-t border-gray-100 pt-1">
                       <button
                         onClick={handleLogout}
@@ -223,9 +223,9 @@ export default function NavBar() {
                 <div className="relative inline-block">
                   <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     {profileImage ? (
-                      <img 
-                        src={profileImage} 
-                        alt="Profile" 
+                      <img
+                        src={profileImage}
+                        alt="Profile"
                         className="w-24 h-24 rounded-full object-cover"
                       />
                     ) : (
@@ -255,7 +255,7 @@ export default function NavBar() {
                     <input
                       type="text"
                       value={profileData.firstName}
-                      onChange={(e) => setProfileData({...profileData, firstName: e.target.value})}
+                      onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -264,7 +264,7 @@ export default function NavBar() {
                     <input
                       type="text"
                       value={profileData.lastName}
-                      onChange={(e) => setProfileData({...profileData, lastName: e.target.value})}
+                      onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -275,7 +275,7 @@ export default function NavBar() {
                   <input
                     type="email"
                     value={profileData.email}
-                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
@@ -285,7 +285,7 @@ export default function NavBar() {
                   <input
                     type="tel"
                     value={profileData.phone}
-                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
@@ -295,7 +295,7 @@ export default function NavBar() {
                   <textarea
                     rows={3}
                     value={profileData.address}
-                    onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                    onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
@@ -305,7 +305,7 @@ export default function NavBar() {
                   <textarea
                     rows={3}
                     value={profileData.bio}
-                    onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                     placeholder="Tell us about yourself..."
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
                   />

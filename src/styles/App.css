@@ -1,8 +1,6 @@
 @charset "UTF-8";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 
 @font-face {
   font-family: "Styrene A Web";
