@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext';
 
 function OnboardConsumer() {
   const { signUp } = useAuth();
+  const [currentStep, setCurrentStep] = useState('userType');
   const [selectedUserType, setSelectedUserType] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
