@@ -14,7 +14,7 @@ import SmartContractDashboard from './SmartContractDashboard';
 import TraceabilityQRCode from './TraceabilityQRCode';
 import NavigationTabs from './NavigationTabs';
 import NotificationSystem, { useNotifications } from './NotificationSystem';
-import LoadingButton from './LoadingSpinner';
+import { LoadingButton } from './LoadingSpinner';
 import { initializeInventoryItem } from '../utils/inventoryUtils';
 import { addTraceabilityEvent, TRACE_EVENT_TYPES, initializeTraceabilityForExistingBatches } from '../utils/traceabilityUtils';
 import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
@@ -498,7 +498,7 @@ const FarmerDashboard = () => {
       {/* Create Batch Modal */}
       {showCreateBatch && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Create New Batch</h2>
             <div className="mb-4">
               <label className="block text-gray-700 mb-1">Plantain Variety</label>
