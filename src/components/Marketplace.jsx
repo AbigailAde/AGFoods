@@ -11,13 +11,13 @@ const PRODUCTS_KEY = 'products';
 const ORDERS_KEY = 'orders';
 const CART_KEY = 'cart';
 
-const Marketplace = () => {
+const Marketplace = ({ initialRole = 'all', lockRole = false, showLayout = true }) => {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedRole, setSelectedRole] = useState(initialRole);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [orderForm, setOrderForm] = useState({
@@ -152,7 +152,7 @@ const Marketplace = () => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesRole = selectedRole === 'all' || product.seller.role === selectedRole;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      product.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesRole && matchesSearch;
   });
 
@@ -258,28 +258,64 @@ const Marketplace = () => {
     setShowCart(false);
 
     alert(`Order placed successfully! ${createdOrders.length} order(s) created. Payment Reference: ${reference.reference}`);
+
+    // Update status of purchased items to 'Sold' or 'Ordered' for batches/products
+    // This prevents them from being sold again and signals they are ready for processing/distribution
+    const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
+    const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+    let batchesUpdated = false;
+    let productsUpdated = false;
+
+    cart.forEach(item => {
+      if (item.type === 'batch') {
+        const batchIndex = allBatches.findIndex(b => b.id === item.id);
+        if (batchIndex !== -1) {
+          allBatches[batchIndex].status = 'Sold'; // Or 'Processing' if bought by processor
+          batchesUpdated = true;
+        }
+      } else if (item.type === 'product' || item.type === 'distribution' || item.type === 'processed') {
+        // Find product in products array
+        const productIndex = allProducts.findIndex(p => p.id === item.id);
+        if (productIndex !== -1) {
+          allProducts[productIndex].status = 'Sold'; // Or 'Distributed'/'Sold'
+          productsUpdated = true;
+        }
+      }
+    });
+
+    if (batchesUpdated) {
+      localStorage.setItem(BATCHES_KEY, JSON.stringify(allBatches));
+    }
+    if (productsUpdated) {
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(allProducts));
+    }
+
+    // Refresh products list to remove sold items
+    setProducts(prevProducts => prevProducts.filter(p => !cart.some(c => c.id === p.id)));
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">AGFoods Marketplace</h1>
-              <p className="text-gray-600">Discover quality plantain products from verified sellers</p>
+      {showLayout && (
+        <div className="bg-white shadow-sm border-b sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">AGFoods Marketplace</h1>
+                <p className="text-gray-600">Discover quality plantain products from verified sellers</p>
+              </div>
+              <button
+                onClick={() => setShowCart(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>Cart ({cart.length})</span>
+              </button>
             </div>
-            <button
-              onClick={() => setShowCart(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <span>Cart ({cart.length})</span>
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Search and Filters */}
@@ -314,7 +350,8 @@ const Marketplace = () => {
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500"
+                disabled={lockRole}
+                className={`flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-green-500 focus:border-green-500 ${lockRole ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               >
                 {roles.map(role => (
                   <option key={role.id} value={role.id}>{role.name}</option>
@@ -363,10 +400,9 @@ const Marketplace = () => {
                   {/* Seller Info */}
                   <div className="flex items-center justify-between pt-2 border-t">
                     <div className="flex items-center space-x-2">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${
-                        product.seller.role === 'farmer' ? 'bg-green-500' :
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${product.seller.role === 'farmer' ? 'bg-green-500' :
                         product.seller.role === 'processor' ? 'bg-purple-500' : 'bg-orange-500'
-                      }`}>
+                        }`}>
                         {product.seller.role[0].toUpperCase()}
                       </div>
                       <div className="flex-1">
@@ -527,7 +563,7 @@ const Marketplace = () => {
                     <input
                       type="text"
                       value={orderForm.customerName}
-                      onChange={(e) => setOrderForm({...orderForm, customerName: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, customerName: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -536,7 +572,7 @@ const Marketplace = () => {
                     <input
                       type="email"
                       value={orderForm.email}
-                      onChange={(e) => setOrderForm({...orderForm, email: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -545,7 +581,7 @@ const Marketplace = () => {
                     <input
                       type="tel"
                       value={orderForm.phone}
-                      onChange={(e) => setOrderForm({...orderForm, phone: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -554,7 +590,7 @@ const Marketplace = () => {
                     <input
                       type="date"
                       value={orderForm.deliveryDate}
-                      onChange={(e) => setOrderForm({...orderForm, deliveryDate: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, deliveryDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
@@ -573,7 +609,7 @@ const Marketplace = () => {
                     <input
                       type="text"
                       value={orderForm.address}
-                      onChange={(e) => setOrderForm({...orderForm, address: e.target.value})}
+                      onChange={(e) => setOrderForm({ ...orderForm, address: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                       placeholder="Enter delivery address"
                     />
@@ -584,7 +620,7 @@ const Marketplace = () => {
                       <input
                         type="text"
                         value={orderForm.city}
-                        onChange={(e) => setOrderForm({...orderForm, city: e.target.value})}
+                        onChange={(e) => setOrderForm({ ...orderForm, city: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
@@ -593,7 +629,7 @@ const Marketplace = () => {
                       <input
                         type="text"
                         value={orderForm.state}
-                        onChange={(e) => setOrderForm({...orderForm, state: e.target.value})}
+                        onChange={(e) => setOrderForm({ ...orderForm, state: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
@@ -606,7 +642,7 @@ const Marketplace = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Special Instructions</label>
                 <textarea
                   value={orderForm.specialInstructions}
-                  onChange={(e) => setOrderForm({...orderForm, specialInstructions: e.target.value})}
+                  onChange={(e) => setOrderForm({ ...orderForm, specialInstructions: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                   rows="3"
                   placeholder="Any special delivery instructions..."

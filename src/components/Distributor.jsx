@@ -52,13 +52,30 @@ const DistributorDashboard = () => {
   const [products, setProducts] = useState([]);
 
   // Load orders, batches, and products from localStorage for this distributor
+  // Load orders, batches, and products from localStorage for this distributor
   useEffect(() => {
     if (!user) return;
     const allOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
     setOrders(allOrders.filter(o => o.distributorId === user.id));
-    const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
-    setAvailableBatches(allBatches.filter(b => b.status === 'Ready' || b.status === 'Processing'));
+
+    // Fetch products bought by this distributor (Inventory)
+    const myProductIds = new Set(allOrders
+      .filter(o => o.distributorId === user.id && o.type === 'distribution')
+      .map(o => o.productId));
+
     const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
+    const myInventory = allProducts.filter(p => myProductIds.has(p.id));
+
+    // Convert to compatible shape for 'availableBatches' dropdown
+    const inventoryForDisplay = myInventory.map(p => ({
+      ...p,
+      variety: p.name,
+      productType: p.processType
+    }));
+
+    setAvailableBatches(inventoryForDisplay);
+
+    // Load this distributor's own products for sale
     setProducts(allProducts.filter(p => p.distributorId === user.id));
   }, [user]);
 

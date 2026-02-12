@@ -30,6 +30,7 @@ const FarmerDashboard = () => {
   const [newBatch, setNewBatch] = useState({
     variety: '',
     quantity: '',
+    price: '',
     harvestDate: '',
     qualityNotes: '',
     image: '' // base64 string
@@ -72,10 +73,10 @@ const FarmerDashboard = () => {
   // Create a new batch
   const handleCreateBatch = async () => {
     // Validation
-    if (!newBatch.variety || !newBatch.quantity || !newBatch.harvestDate) {
+    if (!newBatch.variety || !newBatch.quantity || !newBatch.price || !newBatch.harvestDate) {
       notifications.showError(
         'Validation Error',
-        'Please fill in all required fields (variety, quantity, harvest date)'
+        'Please fill in all required fields (variety, quantity, price, harvest date)'
       );
       return;
     }
@@ -88,6 +89,7 @@ const FarmerDashboard = () => {
         farmerId: user.id,
         variety: newBatch.variety,
         quantity: newBatch.quantity,
+        price: parseFloat(newBatch.price),
         harvestDate: newBatch.harvestDate,
         qualityNotes: newBatch.qualityNotes,
         image: newBatch.image,
@@ -117,6 +119,7 @@ const FarmerDashboard = () => {
           details: {
             variety: batch.variety,
             quantity: batch.quantity,
+            price: batch.price,
             harvestDate: batch.harvestDate,
             qualityNotes: batch.qualityNotes
           },
@@ -150,7 +153,7 @@ const FarmerDashboard = () => {
       );
 
       setShowCreateBatch(false);
-      setNewBatch({ variety: '', quantity: '', harvestDate: '', qualityNotes: '', image: '' });
+      setNewBatch({ variety: '', quantity: '', price: '', harvestDate: '', qualityNotes: '', image: '' });
 
     } catch (error) {
       console.error('Error creating batch:', error);
@@ -436,7 +439,8 @@ const FarmerDashboard = () => {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch ID</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variety</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity (kg)</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (₦)</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harvest Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blockchain</th>
@@ -455,6 +459,7 @@ const FarmerDashboard = () => {
                         <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{batch.id}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{batch.variety}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{batch.quantity}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">₦{batch.price?.toLocaleString()}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{batch.harvestDate}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getStatusColor(batch.status)}`}>
@@ -527,6 +532,17 @@ const FarmerDashboard = () => {
               />
             </div>
             <div className="mb-4">
+              <label className="block text-gray-700 mb-1">Price per kg (₦)</label>
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2"
+                value={newBatch.price}
+                onChange={e => setNewBatch({ ...newBatch, price: e.target.value })}
+                required
+                placeholder="Enter price per kg"
+              />
+            </div>
+            <div className="mb-4">
               <label className="block text-gray-700 mb-1">Harvest Date</label>
               <input
                 type="date"
@@ -589,7 +605,7 @@ const FarmerDashboard = () => {
               <LoadingButton
                 isLoading={isCreatingBatch}
                 loadingText="Creating..."
-                disabled={!newBatch.variety || !newBatch.quantity || !newBatch.harvestDate}
+                disabled={!newBatch.variety || !newBatch.quantity || !newBatch.price || !newBatch.harvestDate}
                 onClick={handleCreateBatch}
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
               >
