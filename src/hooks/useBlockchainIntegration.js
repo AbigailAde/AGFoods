@@ -5,8 +5,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { keccak256, toBytes, encodeAbiParameters, parseAbiParameters } from 'viem';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, usePublicClient } from 'wagmi';
+import { keccak256, toBytes, encodeAbiParameters, parseAbiParameters, decodeEventLog } from 'viem';
 import { TRACEABILITY_CONTRACT, UserRoleValue, getExplorerTxUrl } from '../config/contracts';
 import {
   setBlockchainBatchMapping,
@@ -41,6 +41,8 @@ export const useBlockchainIntegration = () => {
     args: [address],
     enabled: !!address && isConnected,
   });
+
+  const publicClient = usePublicClient();
 
   // Register user on blockchain
   const registerUser = useCallback(async (role) => {
@@ -90,15 +92,50 @@ export const useBlockchainIntegration = () => {
       });
 
       setPendingTx(createHash);
-
-      // Generate batch ID for farmer data
-      const batchId = generateBatchId(localBatch.id);
       
+      // Wait for the createBatch transaction to be mined so the state exists
+      // before we try to add farmer data (otherwise gas estimation for addFarmerData fails)
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: createHash });
+
+      // Generate batch ID for farmer data as a fallback (Wait, if the contract generates one randomly, we should extract it from logs)
+      let batchId = generateBatchId(localBatch.id);
+      
+      // Try to get the actual emitted batchId from the BatchCreated event if possible
+      try {
+        console.log("Analyzing receipt logs for createBatch:", receipt.logs);
+        let foundEvent = false;
+        for (const log of receipt.logs) {
+          try {
+            const decoded = decodeEventLog({
+              abi: TRACEABILITY_CONTRACT.abi,
+              data: log.data,
+              topics: log.topics,
+            });
+            console.log("Decoded log:", decoded);
+            if (decoded.eventName === 'BatchCreated') {
+              batchId = decoded.args.batchId;
+              foundEvent = true;
+              console.log("SUCCESSFULLY extracted batchId from event:", batchId);
+              break;
+            }
+          } catch (e) {
+            // parse errors just mean it's not the event we want
+          }
+        }
+        if (!foundEvent) {
+          console.warn("BatchCreated event NOT found in logs! Falling back to local batch ID. This may cause revert!");
+        }
+      } catch (e) {
+        console.warn('Could not parse BatchCreated event:', e);
+      }
+      
+      console.log("Calling addFarmerData with batchId:", batchId);
       // Add farmer data
       const farmerDataHash = await writeContractAsync({
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'addFarmerData',
+        gas: 10000000n, // explicit gas to prevent 21M fallback which blows the Sepolia cap
         args: [
           batchId,
           localBatch.variety || 'Unknown',
@@ -111,7 +148,7 @@ export const useBlockchainIntegration = () => {
         ],
       });
 
-      // Store mapping
+      // Store mapping so subsequent processors/distributors know the correct on-chain batchId!
       setBlockchainBatchMapping(localBatch.id, batchId, farmerDataHash);
 
       return {
@@ -125,7 +162,7 @@ export const useBlockchainIntegration = () => {
       setError(err.message);
       return { success: false, error: err.message, localOnly: true };
     }
-  }, [isConnected, address, writeContractAsync]);
+  }, [isConnected, address, writeContractAsync, publicClient]);
 
   // Record processing data on blockchain (for Processors)
   const recordProcessingOnChain = useCallback(async (localBatchId, processingData, userData) => {
@@ -135,12 +172,14 @@ export const useBlockchainIntegration = () => {
     }
 
     try {
-      const batchId = generateBatchId(localBatchId);
+      const mapping = getBlockchainBatchMapping(localBatchId);
+      const batchId = mapping?.blockchainBatchId || generateBatchId(localBatchId);
       
       const hash = await writeContractAsync({
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'addProcessorData',
+        gas: 10000000n,
         args: [
           batchId,
           userData?.location || 'Processing Facility',
@@ -176,12 +215,14 @@ export const useBlockchainIntegration = () => {
     }
 
     try {
-      const batchId = generateBatchId(localBatchId);
+      const mapping = getBlockchainBatchMapping(localBatchId);
+      const batchId = mapping?.blockchainBatchId || generateBatchId(localBatchId);
       
       const hash = await writeContractAsync({
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'addDistributorData',
+        gas: 10000000n,
         args: [
           batchId,
           userData?.location || distributionData.destination || 'Warehouse',
@@ -213,13 +254,15 @@ export const useBlockchainIntegration = () => {
     }
 
     try {
-      const blockchainBatchId = generateBatchId(batchId);
+      const mapping = getBlockchainBatchMapping(batchId);
+      const blockchainBatchId = mapping?.blockchainBatchId || generateBatchId(batchId);
       const seller = sellerAddress || address; // Default to self if no seller
       
       const hash = await writeContractAsync({
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'createOrder',
+        gas: 10000000n,
         args: [
           blockchainBatchId,
           seller,
@@ -258,6 +301,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'updateDeliveryStatus',
+        gas: 10000000n,
         args: [
           orderId,
           deliveryData.status || 0,
@@ -295,6 +339,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'confirmDelivery',
+        gas: 10000000n,
         args: [orderId],
       });
 

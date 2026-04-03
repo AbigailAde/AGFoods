@@ -58,19 +58,25 @@ const DistributorDashboard = () => {
     const allOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
     setOrders(allOrders.filter(o => o.distributorId === user.id));
 
-    // Fetch products bought by this distributor (Inventory)
-    const myProductIds = new Set(allOrders
-      .filter(o => o.distributorId === user.id && o.type === 'distribution')
-      .map(o => o.productId));
-
     const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || '[]');
-    const myInventory = allProducts.filter(p => myProductIds.has(p.id));
+    
+    // Globally pull ALL products created by Processors (instead of only ones bought via Marketplace)
+    const myInventory = allProducts.filter(p => (p.processorId && p.processorId !== user.id) || p.status === 'Sold' || p.status === 'Available');
+    const myOwnProducts = allProducts.filter(p => p.distributorId === user.id);
+
+    // Combine purchased inventory and manually created products, ensuring no duplicates
+    const combinedInventory = [...myInventory];
+    myOwnProducts.forEach(ownProd => {
+      if (!combinedInventory.find(p => p.id === ownProd.id)) {
+        combinedInventory.push(ownProd);
+      }
+    });
 
     // Convert to compatible shape for 'availableBatches' dropdown
-    const inventoryForDisplay = myInventory.map(p => ({
+    const inventoryForDisplay = combinedInventory.map(p => ({
       ...p,
       variety: p.name,
-      productType: p.processType
+      productType: p.processType || p.category
     }));
 
     setAvailableBatches(inventoryForDisplay);
