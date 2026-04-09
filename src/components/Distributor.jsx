@@ -58,6 +58,8 @@ const DistributorDashboard = () => {
     const allOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
     setOrders(allOrders.filter(o => o.distributorId === user.id));
 
+    const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
+
     // Fetch products bought by this distributor (Inventory)
     const myProductIds = new Set(allOrders
       .filter(o => o.distributorId === user.id && o.type === 'distribution')
@@ -73,7 +75,7 @@ const DistributorDashboard = () => {
       productType: p.processType
     }));
 
-    setAvailableBatches(inventoryForDisplay);
+    setAvailableBatches(allBatches);
 
     // Load this distributor's own products for sale
     setProducts(allProducts.filter(p => p.distributorId === user.id));

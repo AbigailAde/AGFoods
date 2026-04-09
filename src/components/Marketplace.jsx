@@ -20,6 +20,9 @@ const Marketplace = ({ initialRole = 'all', lockRole = false, showLayout = true 
   const [selectedRole, setSelectedRole] = useState(initialRole);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [categories, setCategories] = useState([
+    { id: 'all', name: 'All Products', count: 0 }
+  ]);
   const [orderForm, setOrderForm] = useState({
     customerName: user?.firstName + ' ' + user?.lastName || '',
     email: user?.email || '',
@@ -30,23 +33,6 @@ const Marketplace = ({ initialRole = 'all', lockRole = false, showLayout = true 
     deliveryDate: '',
     specialInstructions: ''
   });
-
-  const categories = [
-    { id: 'all', name: 'All Products', count: 0 },
-    { id: 'flour', name: 'Plantain Flour', count: 0 },
-    { id: 'chips', name: 'Plantain Chips', count: 0 },
-    { id: 'dried', name: 'Dried Plantain', count: 0 },
-    { id: 'puree', name: 'Plantain Puree', count: 0 },
-    { id: 'raw', name: 'Raw Plantain', count: 0 },
-    { id: 'processed', name: 'Processed Foods', count: 0 }
-  ];
-
-  const roles = [
-    { id: 'all', name: 'All Sellers' },
-    { id: 'farmer', name: 'Farmers' },
-    { id: 'processor', name: 'Processors' },
-    { id: 'distributor', name: 'Distributors' }
-  ];
 
   // Load all available products from all roles
   useEffect(() => {
@@ -146,6 +132,46 @@ const Marketplace = ({ initialRole = 'all', lockRole = false, showLayout = true 
     localStorage.setItem(`${CART_KEY}_${user?.id}`, JSON.stringify(updatedCart));
     setCart(updatedCart);
   };
+
+  console.log(products);
+
+  // Update categories dynamically based on products
+  useEffect(() => {
+    if (products.length > 0) {
+      const categoryMap = new Map();
+      
+      products.forEach(product => {
+        const category = product.category;
+        if (categoryMap.has(category)) {
+          categoryMap.set(category, categoryMap.get(category) + 1);
+        } else {
+          categoryMap.set(category, 1);
+        }
+      });
+
+      const dynamicCategories = [
+        { id: 'all', name: 'All Products', count: products.length }
+      ];
+
+      categoryMap.forEach((count, categoryId) => {
+        const categoryName = categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace(/([A-Z])/g, ' $1').trim();
+        dynamicCategories.push({
+          id: categoryId,
+          name: categoryName,
+          count: count
+        });
+      });
+
+      setCategories(dynamicCategories);
+    }
+  }, [products]);
+
+  const roles = [
+    { id: 'all', name: 'All Sellers' },
+    { id: 'farmer', name: 'Farmers' },
+    { id: 'processor', name: 'Processors' },
+    { id: 'distributor', name: 'Distributors' }
+  ];
 
   // Filter products
   const filteredProducts = products.filter(product => {

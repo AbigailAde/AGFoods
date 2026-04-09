@@ -167,9 +167,9 @@ const FarmerDashboard = () => {
   };
 
   // Stats
-  const totalBatches = batches.length;
-  const activeBatches = batches.filter(b => b.status === 'Ready' || b.status === 'Processing').length;
-  const thisMonth = batches.filter(b => {
+  const totalBatches = batches?.length;
+  const activeBatches = batches?.filter(b => b.status === 'Ready' || b.status === 'Processing').length;
+  const thisMonth = batches?.filter(b => {
     const d = new Date(b.harvestDate);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -303,7 +303,7 @@ const FarmerDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <SmartContractDashboard
             user={user}
-            products={batches.map(batch => ({
+            products={batches?.map(batch => ({
               id: batch.id,
               name: `${batch.variety} - Batch #${batch.id.slice(-6)}`,
               type: batch.variety,
