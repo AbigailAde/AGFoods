@@ -16,7 +16,7 @@ import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
 import BlockchainStatus from './BlockchainStatus';
 import BlockchainRecordButton from './BlockchainRecordButton';
 
-const ORDERS_KEY = 'orders';
+const ORDERS_KEY = 'all_orders';
 const BATCHES_KEY = 'batches';
 const PRODUCTS_KEY = 'products';
 
