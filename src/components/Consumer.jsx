@@ -19,7 +19,7 @@ import { useBlockchainIntegration } from '../hooks/useBlockchainIntegration';
 import BlockchainStatus from './BlockchainStatus';
 
 const BATCHES_KEY = 'batches';
-const ORDERS_KEY = 'orders';
+const ORDERS_KEY = 'all_orders';
 const REQUESTS_KEY = 'consumer_requests';
 
 const CustomerOrderDashboard = () => {
