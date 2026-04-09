@@ -248,19 +248,19 @@ const Marketplace = ({ initialRole = 'all', lockRole = false, showLayout = true 
           item.price * item.quantity,
           deliveryInfo
         );
-      } else if (item.type === 'product' && item.source === 'processor' && user.role === 'distributor') {
+      } else if (item.type === 'processed' && user.role === 'distributor') {
         // Distributor buying from processor
         order = createDistributionOrder(
-          item.processorId,
+          item.seller.id,
           user.id,
           item,
           item.price * item.quantity,
           deliveryInfo
         );
-      } else if ((item.type === 'product' && item.source === 'distributor') || user.role === 'consumer') {
+      } else if (item.type === 'distribution' || user.role === 'consumer') {
         // Consumer buying from distributor
         order = createConsumerOrder(
-          item.distributorId,
+          item.seller.id,
           user.id,
           [item],
           item.price * item.quantity,

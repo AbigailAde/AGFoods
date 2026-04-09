@@ -69,19 +69,12 @@ const ProcessorDashboard = () => {
   useEffect(() => {
     if (!user) return;
 
-    // 1. Fetch orders where this processor bought batches
-    const allOrders = JSON.parse(localStorage.getItem('orders') || '[]'); // Use string literal or import ORDERS_KEY
-    const myBatchIds = new Set(allOrders
-      .filter(o => o.processorId === user.id && o.type === 'processing')
-      .map(o => o.batchId));
-
-    // 2. Fetch all batches and filter only those we bought
+    // Fetch ALL batches from the global DB (localStorage) so processors can process any farmer's batch
     const allBatches = JSON.parse(localStorage.getItem(BATCHES_KEY) || '[]');
-    // We display batches we bought. They might be marked 'Sold' by Marketplace, which is correct.
-    // We treat them as 'Incoming' or 'Ready' for processing in our dashboard.
-    const myInventory = allBatches.filter(b => myBatchIds.has(b.id));
-
-    setIncomingBatches(myInventory);
+    
+    // Filter only batches that are viable for processing
+    const availableFarmBatches = allBatches.filter(b => b.status !== 'Rejected' && b.status !== 'Destroyed');
+    setIncomingBatches(availableFarmBatches);
 
     const allProcessing = JSON.parse(localStorage.getItem(PROCESSING_KEY) || '[]');
     setProcessingJobs(allProcessing.filter(p => p.processorId === user.id));
