@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, usePublicClient } from 'wagmi';
 import { keccak256, toBytes, encodeAbiParameters, parseAbiParameters, decodeEventLog } from 'viem';
-import { TRACEABILITY_CONTRACT, UserRoleValue, getExplorerTxUrl } from '../config/contracts';
+import { TRACEABILITY_CONTRACT, UserRole, UserRoleValue, getExplorerTxUrl } from '../config/contracts';
 import {
   setBlockchainBatchMapping,
   setBlockchainOrderMapping,
@@ -44,6 +44,31 @@ export const useBlockchainIntegration = () => {
 
   const publicClient = usePublicClient();
 
+  // Normalize a role (string like 'farmer'/'Farmer' or numeric) to its enum value
+  const toRoleValue = (role) => {
+    if (typeof role === 'number') return role;
+    if (!role) return UserRoleValue.Consumer;
+    const key = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+    return UserRoleValue[key] ?? UserRoleValue.Consumer;
+  };
+
+  // Read the wallet's CURRENT role directly from the contract (source of truth)
+  const getOnChainRole = useCallback(async () => {
+    if (!publicClient || !address) return UserRoleValue.None;
+    try {
+      const role = await publicClient.readContract({
+        address: TRACEABILITY_CONTRACT.address,
+        abi: TRACEABILITY_CONTRACT.abi,
+        functionName: 'getUserRole',
+        args: [address],
+      });
+      return Number(role);
+    } catch (err) {
+      console.warn('Could not read on-chain role:', err);
+      return UserRoleValue.None;
+    }
+  }, [publicClient, address]);
+
   // Register user on blockchain
   const registerUser = useCallback(async (role) => {
     if (!isConnected || !address) {
@@ -52,18 +77,19 @@ export const useBlockchainIntegration = () => {
     }
 
     try {
-      const roleValue = UserRoleValue[role] || UserRoleValue.Consumer;
-      
+      const roleValue = toRoleValue(role);
+
       const hash = await writeContractAsync({
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'registerUser',
+        gas: 200000n,
         args: [roleValue],
       });
 
       setPendingTx(hash);
       setUserRegisteredOnChain(address, role, hash);
-      
+
       return { 
         success: true, 
         txHash: hash, 
@@ -76,6 +102,42 @@ export const useBlockchainIntegration = () => {
     }
   }, [isConnected, address, writeContractAsync]);
 
+  // Ensure the wallet is registered on-chain with the required role BEFORE any
+  // role-gated write. The contract's onlyFarmer/onlyProcessor/etc. modifiers
+  // revert otherwise, and a guaranteed-revert call makes gas estimation fail,
+  // which in turn makes the wallet fall back to a huge gas limit that the RPC
+  // rejects ("gas limit too high"). Registering first prevents the revert.
+  const ensureRegisteredOnChain = useCallback(async (requiredRole) => {
+    const requiredValue = toRoleValue(requiredRole);
+    const currentRole = await getOnChainRole();
+
+    if (currentRole === requiredValue) {
+      return { ok: true, alreadyRegistered: true };
+    }
+
+    if (currentRole !== UserRoleValue.None) {
+      // Wallet is registered under a different role; the contract forbids
+      // re-registration, so role-gated writes for requiredRole will revert.
+      return {
+        ok: false,
+        error: `This wallet is already registered on-chain as ${UserRole[currentRole]}, not ${UserRole[requiredValue]}. Use a different wallet for ${UserRole[requiredValue]} actions.`,
+      };
+    }
+
+    // Not registered yet — register now and wait for it to be mined so the
+    // subsequent write can estimate gas against a valid state.
+    const hash = await writeContractAsync({
+      address: TRACEABILITY_CONTRACT.address,
+      abi: TRACEABILITY_CONTRACT.abi,
+      functionName: 'registerUser',
+      gas: 200000n,
+      args: [requiredValue],
+    });
+    await publicClient.waitForTransactionReceipt({ hash });
+    setUserRegisteredOnChain(address, requiredRole, hash);
+    return { ok: true, txHash: hash };
+  }, [getOnChainRole, writeContractAsync, publicClient, address]);
+
   // Record batch creation on blockchain (for Farmers)
   const recordBatchOnChain = useCallback(async (localBatch, userData) => {
     if (!isConnected || !address) {
@@ -84,11 +146,21 @@ export const useBlockchainIntegration = () => {
     }
 
     try {
+      // Ensure the wallet is registered as a Farmer on-chain first. Without
+      // this, createBatch()'s onlyFarmer modifier reverts, gas estimation
+      // fails, and the wallet falls back to a 21M gas limit the RPC rejects.
+      const reg = await ensureRegisteredOnChain('Farmer');
+      if (!reg.ok) {
+        setError(reg.error);
+        return { success: false, error: reg.error, localOnly: true };
+      }
+
       // First create the batch on chain
       const createHash = await writeContractAsync({
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'createBatch',
+        gas: 500000n, // explicit cap so a failed estimate can't fall back to 21M
       });
 
       setPendingTx(createHash);
@@ -135,7 +207,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'addFarmerData',
-        gas: 10000000n, // explicit gas to prevent 21M fallback which blows the Sepolia cap
+        gas: 1000000n, // explicit gas to prevent 21M fallback which blows the Sepolia cap
         args: [
           batchId,
           localBatch.variety || 'Unknown',
@@ -162,7 +234,7 @@ export const useBlockchainIntegration = () => {
       setError(err.message);
       return { success: false, error: err.message, localOnly: true };
     }
-  }, [isConnected, address, writeContractAsync, publicClient]);
+  }, [isConnected, address, writeContractAsync, publicClient, ensureRegisteredOnChain]);
 
   // Record processing data on blockchain (for Processors)
   const recordProcessingOnChain = useCallback(async (localBatchId, processingData, userData) => {
@@ -172,6 +244,12 @@ export const useBlockchainIntegration = () => {
     }
 
     try {
+      const reg = await ensureRegisteredOnChain('Processor');
+      if (!reg.ok) {
+        setError(reg.error);
+        return { success: false, error: reg.error, localOnly: true };
+      }
+
       const mapping = getBlockchainBatchMapping(localBatchId);
       const batchId = mapping?.blockchainBatchId || generateBatchId(localBatchId);
       
@@ -179,7 +257,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'addProcessorData',
-        gas: 10000000n,
+        gas: 1000000n,
         args: [
           batchId,
           userData?.location || 'Processing Facility',
@@ -205,7 +283,7 @@ export const useBlockchainIntegration = () => {
       setError(err.message);
       return { success: false, error: err.message, localOnly: true };
     }
-  }, [isConnected, address, writeContractAsync]);
+  }, [isConnected, address, writeContractAsync, ensureRegisteredOnChain]);
 
   // Record distribution data on blockchain (for Distributors)
   const recordDistributionOnChain = useCallback(async (localBatchId, distributionData, userData) => {
@@ -215,6 +293,12 @@ export const useBlockchainIntegration = () => {
     }
 
     try {
+      const reg = await ensureRegisteredOnChain('Distributor');
+      if (!reg.ok) {
+        setError(reg.error);
+        return { success: false, error: reg.error, localOnly: true };
+      }
+
       const mapping = getBlockchainBatchMapping(localBatchId);
       const batchId = mapping?.blockchainBatchId || generateBatchId(localBatchId);
       
@@ -222,7 +306,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'addDistributorData',
-        gas: 10000000n,
+        gas: 1000000n,
         args: [
           batchId,
           userData?.location || distributionData.destination || 'Warehouse',
@@ -244,7 +328,7 @@ export const useBlockchainIntegration = () => {
       setError(err.message);
       return { success: false, error: err.message, localOnly: true };
     }
-  }, [isConnected, address, writeContractAsync]);
+  }, [isConnected, address, writeContractAsync, ensureRegisteredOnChain]);
 
   // Record order on blockchain (for Consumers/Buyers)
   const recordOrderOnChain = useCallback(async (localOrder, batchId, sellerAddress) => {
@@ -262,7 +346,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'createOrder',
-        gas: 10000000n,
+        gas: 1000000n,
         args: [
           blockchainBatchId,
           seller,
@@ -301,7 +385,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'updateDeliveryStatus',
-        gas: 10000000n,
+        gas: 1000000n,
         args: [
           orderId,
           deliveryData.status || 0,
@@ -339,7 +423,7 @@ export const useBlockchainIntegration = () => {
         address: TRACEABILITY_CONTRACT.address,
         abi: TRACEABILITY_CONTRACT.abi,
         functionName: 'confirmDelivery',
-        gas: 10000000n,
+        gas: 500000n,
         args: [orderId],
       });
 
