@@ -279,7 +279,7 @@ const SmartContractDashboard = ({ user, products = [], onTransactionComplete }) 
                       </svg>
                       <div className="ml-4">
                         <p className="text-sm font-medium text-orange-600">Network</p>
-                        <p className="text-lg font-bold text-orange-900">Hedera Testnet</p>
+                        <p className="text-lg font-bold text-orange-900">Sepolia Testnet</p>
                       </div>
                     </div>
                   </div>
